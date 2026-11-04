@@ -162,10 +162,30 @@ h1{
   text-wrap:balance;font-size:clamp(1.9rem,4.9vw,3.7rem);
 }
 .hero .sub{margin:0;color:#b4b0c4;font-weight:400;font-size:1.02rem;max-width:36em}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid rgba(110,231,160,.35);color:#6ee7a0;background:rgba(110,231,160,.07);
+  border-radius:999px;padding:.45em 1.2em;font-size:.82rem;font-weight:600;letter-spacing:.03em;
+}
+.hero-badge i{width:7px;height:7px;border-radius:50%;background:#6ee7a0;box-shadow:0 0 9px #6ee7a0}
+@media (prefers-reduced-motion:no-preference){.hero-badge i{animation:blinkdot 1.8s ease-in-out infinite}@keyframes blinkdot{50%{opacity:.3}}}
+.hgrad{
+  background:linear-gradient(115deg,#fff 8%,#cfc4ff 45%,#8b7cf7 90%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
+.ticks{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.tick{
+  font-size:.84rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;
+  padding:.42em 1.05em;background:rgba(17,16,32,.6);
+}
+.tick b{color:#fff;font-weight:600}
 @media (prefers-reduced-motion:no-preference){
   .hero>*{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
   .hero>*:nth-child(2){animation-delay:.08s}
   .hero>*:nth-child(3){animation-delay:.16s}
+  .hero>*:nth-child(4){animation-delay:.24s}
+  .hero>*:nth-child(5){animation-delay:.34s}
   @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 }
 
@@ -394,9 +414,19 @@ footer .fine{margin-top:12px;max-width:62em}
       </nav>
 
       <header class="hero">
-        <h1>Stealth Meme Launches<br>All At The Same Price</h1>
-        <p class="sub">Every token launches blind on Solana with a 3% dev cap<br>and 0% fees until it clears $100k</p>
-        <a class="cta-halo" id="launch-cta" href="create"><span class="btn-inner">Get started</span></a>
+        <span class="hero-badge"><i></i>Sealed launches · live</span>
+        <h1>Stealth Meme Launches<br><span class="hgrad">All At The Same Price</span></h1>
+        <p class="sub">Every token launches blind on Solana — nobody gets the contract early,<br>the dev buy is capped at 3%, and we take 0% until it clears $100k.</p>
+        <div class="hero-cta">
+          <a class="cta-halo" id="launch-cta" href="create"><span class="btn-inner">Launch a token</span></a>
+          <a class="btn outline" href="tokens">Browse tokens</a>
+        </div>
+        <div class="ticks">
+          <span class="tick">Stealth CA · <b>always</b></span>
+          <span class="tick">Dev buy · <b>3% max</b></span>
+          <span class="tick">Entry floor · <b>$20k</b></span>
+          <span class="tick">Fees under $100k · <b>0%</b></span>
+        </div>
       </header>
 
       <section class="deck-zone" id="launches">

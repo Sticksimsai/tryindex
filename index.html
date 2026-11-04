@@ -524,7 +524,7 @@ footer .fine{margin-top:12px;max-width:62em}
 const icoLink = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.1 0l2.5-2.5a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.5 2.5a5 5 0 0 0 7.1 7.1L13 19.1"/></svg>`;
 const icoX    = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3h4.6l4.1 5.7L17.6 3H21l-6.6 8 7 10h-4.6l-4.5-6.3L7 21H3.5l7-8.4L4 3z"/></svg>`;
 const icoChat = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8z"/></svg>`;
-const icoSol  = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.2 5h12.9c.5 0 .8.6.4 1l-2.3 2.4a1 1 0 0 1-.7.3H3.6c-.5 0-.8-.6-.4-1l2.3-2.4a1 1 0 0 1 .7-.3zm0 10.3h12.9c.5 0 .8.6.4 1l-2.3 2.4a1 1 0 0 1-.7.3H3.6c-.5 0-.8-.6-.4-1l2.3-2.4a1 1 0 0 1 .7-.3zm11-5.2H4.3c-.5 0-.8.6-.4 1l2.3 2.4a1 1 0 0 0 .7.3h12.9c.5 0 .8-.6.4-1l-2.3-2.4a1 1 0 0 0-.7-.3z"/></svg>`;
+const icoSol  = `<svg viewBox="0 0 398 312" aria-hidden="true"><defs><linearGradient id="solg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9945FF"/><stop offset="1" stop-color="#14F195"/></linearGradient></defs><path fill="url(#solg)" d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z"/><path fill="url(#solg)" d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z"/><path fill="url(#solg)" d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z"/></svg>`;
 
 /* ---------- launches (swap for live feed at integration) ---------- */
 const launches = [
@@ -555,7 +555,7 @@ function cardHTML(t, hidden){
         <span class="when">Launched ${t.ago}</span>
       </div>
       <div class="stats">
-        <div class="stat"><span class="lbl">Market cap</span><span class="val num"><span class="coin">◎</span>${t.mcap}</span></div>
+        <div class="stat"><span class="lbl">MCAP</span><span class="val num">${t.mcap}</span></div>
         <div class="stat"><span class="lbl">Curve</span><span class="val num">${t.prog}</span></div>
         <div class="stat"><span class="lbl">Dev buy</span><span class="val">≤ 3%</span></div>
       </div>

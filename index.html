@@ -247,7 +247,7 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 
 /* ---------- index ring ---------- */
 .basket{max-width:1500px;margin-inline:auto;
-  background:#15131f;border:1px solid var(--line);border-radius:26px;
+  background:linear-gradient(180deg,#15131f 0%,#1a1630 140%);border:1px solid var(--line);border-radius:26px;
   display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:42px;align-items:center;
   padding:42px clamp(20px,4vw,50px);overflow:hidden;position:relative;
 }
@@ -266,16 +266,23 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .rebalance-flag.show{opacity:1}
 .basket-copy{display:grid;gap:15px;min-width:0}
 .basket-copy p{margin:0;color:var(--muted)}
-.holdings{display:grid;margin-top:2px}
+.holdings{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:10px;margin-top:2px}
 .holding{
-  display:flex;align-items:center;gap:12px;font-size:.95rem;
-  padding-block:9px;border-bottom:1px solid rgba(255,255,255,.06);
-  transition:background .4s;
+  background:#111020;border:1px solid var(--line);border-radius:16px;
+  padding:14px 8px 12px;display:grid;justify-items:center;gap:7px;text-align:center;min-width:0;
+  transition:background .4s,border-color .4s,transform .25s;
 }
-.holding.flash{background:rgba(110,231,160,.07)}
-.holding .sw{width:11px;height:11px;border-radius:50%;flex:none;transition:background .6s}
-.holding .t{font-weight:600}
-.holding .w{margin-left:auto;color:var(--muted)}
+.holding:hover{transform:translateY(-3px);border-color:rgba(185,170,245,.4)}
+.holding.flash{border-color:rgba(110,231,160,.5);background:rgba(110,231,160,.05)}
+.holding .pf{width:50px;height:50px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2.5px var(--pc,#8b7cf7),0 6px 18px rgba(0,0,0,.4)}
+.holding .pf svg{width:100%;height:100%;display:block}
+.holding .t{font-weight:600;font-size:.82rem}
+.holding .w{font-family:var(--display);color:#bdaffb;font-size:1.02rem}
+.orb{
+  position:absolute;transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;
+  border:2.5px solid #15131f;pointer-events:none;background:#15131f;
+}
+.orb svg{width:100%;height:100%;display:block}
 .basket-note{font-size:.84rem;color:var(--muted);padding-top:6px}
 /* drop calculator */
 .calc{background:#111020;border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;display:grid;gap:12px}
@@ -296,7 +303,8 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .hrow{display:flex;align-items:center;gap:10px;font-size:.84rem;flex-wrap:wrap}
 .hrow .hd{color:var(--muted);min-width:58px;font-weight:500}
 .hchip{display:inline-flex;align-items:center;gap:6px;background:#1b1827;border:1px solid var(--line);border-radius:999px;padding:.22em .7em;font-size:.78rem;font-weight:600;color:#dcd9ea}
-.hchip i{width:7px;height:7px;border-radius:50%;flex:none}
+.hchip .hpf{width:17px;height:17px;border-radius:50%;overflow:hidden;flex:none;margin-left:-2px}
+.hchip .hpf svg{width:100%;height:100%;display:block}
 .hchip.in{border-color:rgba(110,231,160,.45)}
 .hchip.in::after{content:"new";color:#6ee7a0;font-size:.68rem;font-weight:700;margin-left:2px}
 
@@ -490,26 +498,54 @@ function cardHTML(t, hidden){
 const track = document.getElementById("track");
 track.innerHTML = launches.map(t=>cardHTML(t,false)).join("") + launches.map(t=>cardHTML(t,true)).join("");
 
-/* ================= index ring — canvas rebalance animation =================
-   Five arcs, weight-proportional. Every cycle the weights drift and the list
-   re-ranks: arcs glide to their new sweep, a green flag flashes, the holdings
-   rows flash as their numbers tick. Honors prefers-reduced-motion. */
-const PALETTE = ["#8b7cf7","#6ee7a0","#f7b955","#f472b6","#60a5fa"];
-let tokens = [
-  {t:"$SNIBB", w:38},
-  {t:"$ZOINK", w:24},
-  {t:"$GLORP", w:17},
-  {t:"$CRUMB", w:12},
-  {t:"$WAGYU", w: 9},
-];
-const bench = ["$MOP","$DRIP","$HONK","$YEET"]; // rotation candidates
+/* ================= index ring — pfp orbit + rebalance animation =================
+   Five arcs sized by weight, each carrying its token's pfp on the ring. Weekly
+   rotation simulated: weights drift, the laggard can rotate out for a bench
+   token, arcs and pfps glide to their new spots. Honors prefers-reduced-motion. */
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* original mascot pfps, generated per ticker (seeded faces, meme-pfp style) */
+function pfp(tk, col){
+  let h = 7; for(const c of tk) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  const m = h % 4, acc = (h >> 2) % 4;
+  const eyeY = 47, dx = 15;
+  const mouths = [
+    `<path d="M32 62 Q50 77 68 62" stroke="#15131f" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+    `<ellipse cx="50" cy="66" rx="10" ry="7.5" fill="#15131f"/><path d="M43 69 Q50 79 57 69 Z" fill="#f472b6"/>`,
+    `<path d="M36 65 Q43 72 50 65 Q57 72 64 65" stroke="#15131f" stroke-width="4.5" fill="none" stroke-linecap="round"/>`,
+    `<line x1="38" y1="66" x2="62" y2="66" stroke="#15131f" stroke-width="5" stroke-linecap="round"/>`
+  ];
+  const eyes = acc === 1
+    ? `<rect x="25" y="${eyeY-9}" width="50" height="15" rx="6" fill="#15131f"/><rect x="29" y="${eyeY-6}" width="17" height="4" rx="2" fill="#4a4367"/>`
+    : `<circle cx="${50-dx}" cy="${eyeY}" r="9" fill="#fff"/><circle cx="${50+dx}" cy="${eyeY}" r="9" fill="#fff"/><circle cx="${50-dx+2.5}" cy="${eyeY+1}" r="4.2" fill="#15131f"/><circle cx="${50+dx+2.5}" cy="${eyeY+1}" r="4.2" fill="#15131f"/>`;
+  const hat = acc === 2
+    ? `<path d="M23 36 Q50 10 77 36 L77 42 Q50 22 23 42 Z" fill="#15131f" opacity=".9"/>`
+    : acc === 3 ? `<rect x="21" y="27" width="58" height="9" rx="4.5" fill="#fff" opacity=".9"/>` : "";
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs><radialGradient id="g${h}" cx=".35" cy=".28" r="1"><stop offset="0" stop-color="#fff" stop-opacity=".8"/><stop offset=".3" stop-color="${col}"/><stop offset="1" stop-color="${col}"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="50" fill="url(#g${h})"/>${hat}${eyes}${mouths[m]}
+  </svg>`;
+}
+
+let tokens = [
+  {t:"$SNIBB", c:"#8b7cf7", w:38},
+  {t:"$ZOINK", c:"#6ee7a0", w:24},
+  {t:"$GLORP", c:"#f7b955", w:17},
+  {t:"$CRUMB", c:"#f472b6", w:12},
+  {t:"$WAGYU", c:"#60a5fa", w: 9},
+];
+const bench = [
+  {t:"$MOP",  c:"#22d3ee"},
+  {t:"$DRIP", c:"#c084fc"},
+  {t:"$HONK", c:"#fbbf24"},
+  {t:"$YEET", c:"#34d399"},
+];
 
 const holdingsEl = document.getElementById("holdings");
 function renderHoldings(flashSet){
-  holdingsEl.innerHTML = tokens.map((h,i)=>`
-    <div class="holding ${flashSet && flashSet.has(h.t) ? "flash":""}">
-      <span class="sw" style="background:${PALETTE[i]}"></span>
+  holdingsEl.innerHTML = tokens.map(h=>`
+    <div class="holding ${flashSet && flashSet.has(h.t) ? "flash":""}" style="--pc:${h.c}">
+      <span class="pf">${pfp(h.t, h.c)}</span>
       <span class="t">${h.t}</span>
       <span class="w num">${h.w}%</span>
     </div>`).join("");
@@ -518,6 +554,7 @@ renderHoldings();
 
 const cv = document.getElementById("ring");
 const ctx = cv.getContext("2d");
+const ringWrap = cv.parentElement;
 let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2);
 function size(){
   const r = cv.parentElement.getBoundingClientRect();
@@ -527,18 +564,27 @@ function size(){
 }
 size(); addEventListener("resize", size);
 
-/* current + target sweep fractions */
+/* pfp orbs riding the ring */
+const orbs = tokens.map(()=> {
+  const o = document.createElement("div");
+  o.className = "orb";
+  ringWrap.appendChild(o);
+  return o;
+});
+
 let cur = tokens.map(t=>t.w/100);
 let tgt = cur.slice();
-let spin = -Math.PI/2;          // slow global rotation
-let pulse = 0;                  // rebalance glow pulse 0..1
+let spin = -Math.PI/2;
+let pulse = 0;
 
+function geometry(){
+  return {cx:W/2, cy:H/2, R:Math.min(W,H)/2 - 30};
+}
 function draw(){
   ctx.clearRect(0,0,W,H);
-  const cx=W/2, cy=H/2;
-  const R = Math.min(W,H)/2 - 26;
-  const LW = Math.max(20, R*0.21);
-  const GAP = 0.055;            // radians between segments
+  const {cx,cy,R} = geometry();
+  const LW = Math.max(16, R*0.17);
+  const GAP = 0.07;
   const total = cur.reduce((a,b)=>a+b,0);
   let a = spin;
   for(let i=0;i<cur.length;i++){
@@ -548,33 +594,43 @@ function draw(){
       ctx.beginPath();
       ctx.lineWidth = LW + (pulse*3);
       ctx.lineCap = "round";
-      ctx.strokeStyle = PALETTE[i];
-      ctx.shadowColor = PALETTE[i];
-      ctx.shadowBlur = 16 + pulse*22;
+      ctx.strokeStyle = tokens[i].c;
+      ctx.shadowColor = tokens[i].c;
+      ctx.shadowBlur = 14 + pulse*22;
       ctx.arc(cx,cy,R,a + GAP/2, a + GAP/2 + sweep);
       ctx.stroke();
       ctx.shadowBlur = 0;
-      /* orbit bead at segment midpoint */
-      const mid = a + GAP/2 + sweep/2;
-      ctx.beginPath();
-      ctx.fillStyle = "#ffffff";
-      ctx.globalAlpha = .9;
-      ctx.arc(cx + Math.cos(mid)*R, cy + Math.sin(mid)*R, 2.4, 0, Math.PI*2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
     }
     a += frac*(Math.PI*2);
   }
-  /* faint inner guide ring */
   ctx.beginPath();
   ctx.strokeStyle = "rgba(255,255,255,.05)";
   ctx.lineWidth = 1;
   ctx.arc(cx,cy,R-LW/2-7,0,Math.PI*2);
   ctx.stroke();
 }
+function placeOrbs(){
+  const {cx,cy,R} = geometry();
+  const total = cur.reduce((a,b)=>a+b,0);
+  let a = spin;
+  for(let i=0;i<cur.length;i++){
+    const frac = cur[i]/total;
+    const mid = a + frac*Math.PI;
+    const o = orbs[i];
+    const sz = Math.round(Math.max(28, Math.min(56, 22 + frac*115)));
+    o.style.width = o.style.height = sz + "px";
+    o.style.left = (cx + Math.cos(mid)*R) + "px";
+    o.style.top  = (cy + Math.sin(mid)*R) + "px";
+    if(o.dataset.t !== tokens[i].t){
+      o.dataset.t = tokens[i].t;
+      o.innerHTML = pfp(tokens[i].t, tokens[i].c);
+      o.style.boxShadow = `0 0 16px ${tokens[i].c}80, 0 4px 14px rgba(0,0,0,.5)`;
+    }
+    a += frac*(Math.PI*2);
+  }
+}
 
 function frame(){
-  /* ease current toward target */
   let moving = false;
   for(let i=0;i<cur.length;i++){
     const d = tgt[i]-cur[i];
@@ -583,27 +639,25 @@ function frame(){
   }
   if(!reduceMotion) spin += 0.0012;
   pulse = Math.max(0, pulse - 0.015);
-  draw();
+  draw(); placeOrbs();
   if(!reduceMotion || moving) requestAnimationFrame(frame);
 }
 
 const flag = document.getElementById("rebalance-flag");
 function rebalance(){
-  /* drift weights; occasionally rotate the laggard out for a bench token */
   let ws = tokens.map(t=>t.w + (Math.random()*10-5));
   if(Math.random() < 0.45){
     const inT = bench[Math.floor(Math.random()*bench.length)];
-    if(!tokens.some(t=>t.t===inT)){
-      tokens[tokens.length-1] = {t:inT, w:ws[ws.length-1]};
+    if(!tokens.some(t=>t.t===inT.t)){
+      tokens[tokens.length-1] = {t:inT.t, c:inT.c, w:ws[ws.length-1]};
     }
   }
   ws = ws.map(w=>Math.max(5,w));
-  const s = ws.reduce((a,b)=>a+b,0);
-  ws = ws.map(w=>w/s*100);
+  const sum = ws.reduce((a,b)=>a+b,0);
+  ws = ws.map(w=>w/sum*100);
   tokens.forEach((t,i)=>t.w = ws[i]);
   tokens.sort((a,b)=>b.w-a.w);
   tokens.forEach((t,i)=>t.w = Math.round(t.w));
-  /* fix rounding to 100 */
   const diff = 100 - tokens.reduce((a,b)=>a+b.w,0);
   tokens[0].w += diff;
 
@@ -615,7 +669,7 @@ function rebalance(){
   setTimeout(()=>renderHoldings(), 2000);
 }
 
-draw();
+draw(); placeOrbs();
 if(!reduceMotion){
   requestAnimationFrame(frame);
   setInterval(rebalance, 7000);
@@ -696,13 +750,13 @@ if(!reduceMotion){
   const host = document.getElementById("history");
   const weeks = [
     {d:"27 Oct", t:[["$SNIBB","#8b7cf7",0],["$ZOINK","#6ee7a0",0],["$GLORP","#f7b955",1],["$CRUMB","#f472b6",0],["$WAGYU","#60a5fa",0]]},
-    {d:"20 Oct", t:[["$SNIBB","#8b7cf7",0],["$ZOINK","#6ee7a0",1],["$CRUMB","#f472b6",0],["$WAGYU","#60a5fa",0],["$MOP","#9b97ad",0]]},
-    {d:"13 Oct", t:[["$SNIBB","#8b7cf7",1],["$CRUMB","#f472b6",1],["$WAGYU","#60a5fa",0],["$MOP","#9b97ad",0],["$DRIP","#9b97ad",0]]},
+    {d:"20 Oct", t:[["$SNIBB","#8b7cf7",0],["$ZOINK","#6ee7a0",1],["$CRUMB","#f472b6",0],["$WAGYU","#60a5fa",0],["$MOP","#22d3ee",0]]},
+    {d:"13 Oct", t:[["$SNIBB","#8b7cf7",1],["$CRUMB","#f472b6",1],["$WAGYU","#60a5fa",0],["$MOP","#22d3ee",0],["$DRIP","#c084fc",0]]},
   ];
   host.insertAdjacentHTML("beforeend", weeks.map(w=>`
     <div class="hrow">
       <span class="hd">${w.d}</span>
-      ${w.t.map(([tk,c,isNew])=>`<span class="hchip ${isNew?"in":""}"><i style="background:${c}"></i>${tk}</span>`).join("")}
+      ${w.t.map(([tk,c,isNew])=>`<span class="hchip ${isNew?"in":""}"><span class="hpf">${pfp(tk,c)}</span>${tk}</span>`).join("")}
     </div>`).join(""));
 })();
 

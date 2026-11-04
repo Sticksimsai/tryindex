@@ -175,10 +175,12 @@ async function ensurePlatform() {
     platformLockNftWallet: admin.publicKey,
     platformVestingWallet: admin.publicKey,
     cpConfigId,
+    /* program rule: creator_scale MUST be 0 at creation (require_eq in platform_config.rs);
+       creators earn via the CPMM creator-fee path post-graduation instead */
     migrateCpLockNftScale: {
       platformScale: new BN(Number(process.env.PLATFORM_SCALE || 250_000)),  // 25% of LP fee rights
-      creatorScale:  new BN(Number(process.env.CREATOR_SCALE  || 250_000)),  // 25%
-      burnScale:     new BN(Number(process.env.BURN_SCALE     || 500_000)),  // 50% dead
+      creatorScale:  new BN(Number(process.env.CREATOR_SCALE  || 0)),
+      burnScale:     new BN(Number(process.env.BURN_SCALE     || 750_000)),  // 75% dead
     },
     transferFeeExtensionAuth: admin.publicKey,
     creatorFeeRate: new BN(Number(process.env.CREATOR_FEE_RATE || 0)), // 0% on the curve
@@ -193,7 +195,7 @@ async function ensurePlatform() {
   const txId = res?.txId || (Array.isArray(res?.txIds) ? res.txIds[0] : "");
   cachedPlatformId = derived;
   ensured = true;
-  console.log(`platform: CREATED ${derived.toBase58()} (tx ${txId}) — 0% curve fee, LP split 25/25/50`);
+  console.log(`platform: CREATED ${derived.toBase58()} (tx ${txId}) — 0% curve fee, LP fee split 25% platform / 75% burned`);
   return derived;
 }
 

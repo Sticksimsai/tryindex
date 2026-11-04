@@ -48,9 +48,9 @@ body{background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overfl
 
 .stage{
   position:relative;
-  padding-left:max(10px, env(safe-area-inset-left, 0px));
-  padding-right:max(10px, env(safe-area-inset-right, 0px));
-  padding-block:10px 14px;
+  padding-left:max(25px, env(safe-area-inset-left, 0px));
+  padding-right:max(25px, env(safe-area-inset-right, 0px));
+  padding-block:40px 25px;
 }
 .frame{position:relative;border:1px solid var(--line);border-radius:28px;background:var(--frame)}
 .frame-bg{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
@@ -201,9 +201,46 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .sec-head{display:grid;gap:8px;text-align:center;justify-items:center;margin-bottom:34px}
 .sec-head p{margin:0;color:var(--muted);max-width:40em}
 .rules{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
-.rule{background:#15131f;border:1px solid var(--line);border-radius:20px;padding:24px 22px;display:grid;gap:10px;align-content:start;min-width:0}
-.rule .big{font-family:var(--display);font-size:1.85rem;color:#bdaffb;letter-spacing:.02em}
-.rule h3{margin:0;font-weight:600;font-size:1.02rem}
+.rule{
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#15131f 0%,#1a1630 140%);
+  border:1px solid var(--line);border-radius:22px;
+  padding:26px 24px;display:grid;gap:11px;align-content:start;min-width:0;
+  transition:transform .28s cubic-bezier(.2,.7,.2,1),border-color .28s,box-shadow .28s;
+}
+.rule::before{ /* top accent hairline */
+  content:"";position:absolute;top:0;left:14%;right:14%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(189,175,251,.5),transparent);
+  opacity:.5;transition:opacity .3s,left .3s,right .3s;
+}
+.rule::after{ /* sheen sweep */
+  content:"";position:absolute;top:-10%;bottom:-10%;width:55%;left:-80%;
+  background:linear-gradient(100deg,transparent,rgba(189,175,251,.08),transparent);
+  transform:skewX(-14deg);pointer-events:none;
+}
+.rule:hover{transform:translateY(-5px);border-color:rgba(185,170,245,.45);box-shadow:0 20px 54px rgba(80,58,200,.28)}
+.rule:hover::before{opacity:1;left:6%;right:6%}
+@media (prefers-reduced-motion:no-preference){
+  .rule::after{animation:sheen 9s ease-in-out infinite}
+  .rules .rule:nth-child(2)::after{animation-delay:1.1s}
+  .rules .rule:nth-child(3)::after{animation-delay:2.2s}
+  .rules .rule:nth-child(4)::after{animation-delay:3.3s}
+  @keyframes sheen{0%,46%{left:-80%}64%,100%{left:125%}}
+}
+.rule .big{
+  font-family:var(--display);font-size:1.95rem;letter-spacing:.02em;
+  background:linear-gradient(120deg,#fff 10%,#bdaffb 55%,#8b7cf7);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.rule .rico{
+  position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:12px;
+  display:grid;place-items:center;color:#bdaffb;
+  background:rgba(122,99,232,.1);border:1px solid rgba(189,175,251,.2);
+  transition:color .3s,border-color .3s,transform .3s,background .3s;
+}
+.rule .rico svg{width:19px;height:19px}
+.rule:hover .rico{color:#fff;border-color:rgba(189,175,251,.55);background:rgba(122,99,232,.22);transform:rotate(-6deg) scale(1.08)}
+.rule h3{margin:0;font-weight:600;font-size:1.04rem}
 .rule p{margin:0;color:var(--muted);font-size:.92rem}
 .rule a{color:#bdaffb;text-decoration:none;font-weight:500}
 .rule a:hover{text-decoration:underline}
@@ -328,21 +365,25 @@ footer .fine{margin-top:12px;max-width:62em}
         </div>
         <div class="rules">
           <div class="rule">
+            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
             <span class="big">Block 0</span>
             <h3>Stealth contract</h3>
             <p>The mint is generated server-side and fired atomically. The contract address goes public to everyone at the same second — devs can't tip off bundlers with a CA that doesn't exist yet.</p>
           </div>
           <div class="rule">
+            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
             <span class="big">3%</span>
             <h3>One dev buy, capped</h3>
             <p>A single dev buy rides inside the launch transaction, capped at 3% of supply. After that, the dev queues up with everyone else.</p>
           </div>
           <div class="rule">
+            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>
             <span class="big">$20k</span>
             <h3>Entry floor</h3>
             <p>Every token opens at a $20k market cap. No sub-$5k sniper ramp, no 25× head start for bots — the first buyer and the hundredth get comparable entries.</p>
           </div>
           <div class="rule">
+            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
             <span class="big">0%</span>
             <h3>Free until it works</h3>
             <p>Launching costs nothing and we take 0% on the curve. Our fee only switches on once a token graduates past $100k — we earn when you do.</p>

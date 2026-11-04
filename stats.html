@@ -44,10 +44,10 @@ body{background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overfl
 .num{font-variant-numeric:tabular-nums}
 
 .stage{
-  position:relative;max-width:1420px;margin:0 auto;
-  padding-left:max(16px, env(safe-area-inset-left, 0px));
-  padding-right:max(16px, env(safe-area-inset-right, 0px));
-  padding-block:26px 34px;
+  position:relative;
+  padding-left:max(10px, env(safe-area-inset-left, 0px));
+  padding-right:max(10px, env(safe-area-inset-right, 0px));
+  padding-block:10px 14px;
 }
 .frame{position:relative;border:1px solid var(--line);border-radius:28px;background:var(--frame)}
 .frame-bg{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
@@ -125,7 +125,7 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 
 
 /* ---------- stats dashboard ---------- */
-.dash{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.dash{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
 .dcard{
   background:#111020;border:1px solid var(--line);border-radius:20px;
   padding:20px 22px;display:grid;gap:14px;align-content:start;min-width:0;
@@ -200,7 +200,7 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 @media (max-width:700px){.span5,.span4,.span3,.span6{grid-column:1/-1}.kpis{flex-wrap:wrap;gap:14px}.kpi{flex:1 1 40%;border-left:0;padding-inline:0}}
 
 
-.duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.duo{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .panel{background:#15131f;border:1px solid var(--line);border-radius:20px;padding:26px 24px;display:grid;gap:12px;align-content:start;min-width:0}
 .panel h2{font-size:1.35rem}
 .panel p{margin:0;color:var(--muted)}

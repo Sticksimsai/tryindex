@@ -47,10 +47,10 @@ body{background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overfl
 .num{font-variant-numeric:tabular-nums}
 
 .stage{
-  position:relative;max-width:1420px;margin:0 auto;
-  padding-left:max(16px, env(safe-area-inset-left, 0px));
-  padding-right:max(16px, env(safe-area-inset-right, 0px));
-  padding-block:26px 34px;
+  position:relative;
+  padding-left:max(10px, env(safe-area-inset-left, 0px));
+  padding-right:max(10px, env(safe-area-inset-right, 0px));
+  padding-block:10px 14px;
 }
 .frame{position:relative;border:1px solid var(--line);border-radius:28px;background:var(--frame)}
 .frame-bg{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
@@ -200,7 +200,7 @@ section{padding-block:58px}
 h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.7vw,2rem);line-height:1.25;letter-spacing:.015em;text-wrap:balance}
 .sec-head{display:grid;gap:8px;text-align:center;justify-items:center;margin-bottom:34px}
 .sec-head p{margin:0;color:var(--muted);max-width:40em}
-.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.rules{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
 .rule{background:#15131f;border:1px solid var(--line);border-radius:20px;padding:24px 22px;display:grid;gap:10px;align-content:start;min-width:0}
 .rule .big{font-family:var(--display);font-size:1.85rem;color:#bdaffb;letter-spacing:.02em}
 .rule h3{margin:0;font-weight:600;font-size:1.02rem}
@@ -209,7 +209,7 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .rule a:hover{text-decoration:underline}
 
 /* ---------- index ring ---------- */
-.basket{
+.basket{max-width:1500px;margin-inline:auto;
   background:#15131f;border:1px solid var(--line);border-radius:26px;
   display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:42px;align-items:center;
   padding:42px clamp(20px,4vw,50px);overflow:hidden;position:relative;

@@ -7,6 +7,7 @@ const crypto = require("node:crypto");
 const CFG = require("./config");
 const store = require("./store");
 const { prepareLaunch, submitLaunch } = require("./launch");
+const platform = require("./platform");
 
 const app = express();
 app.use(cors());
@@ -19,11 +20,14 @@ fs.mkdirSync(META_DIR, { recursive: true });
 const pending = new Map();
 
 app.get("/api/config", (_req, res) => {
+  const pfid = platform.platformId();
   res.json({
     ok: true,
     network: CFG.NETWORK,
     maxDevBuyPct: CFG.MAX_DEV_BUY_PCT,
     solPerPct: CFG.SOL_PER_PCT,
+    platformId: pfid ? pfid.toBase58() : null,
+    platformAdmin: platform.adminPubkey(),
   });
 });
 
@@ -129,4 +133,5 @@ app.use(express.static(path.join(__dirname, ".."), { extensions: ["html"] }));
 
 app.listen(CFG.PORT, () => {
   console.log(`index.fun engine up on :${CFG.PORT} — network=${CFG.NETWORK} rpc=${CFG.RPC_URL}`);
+  platform.ensurePlatform().catch((e) => console.error("platform setup failed:", e.message));
 });

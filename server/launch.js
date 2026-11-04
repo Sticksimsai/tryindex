@@ -22,6 +22,7 @@ const {
 const { NATIVE_MINT } = require("@solana/spl-token");
 const BN = require("bn.js");
 const CFG = require("./config");
+const platform = require("./platform");
 
 let sdk; // lazy-loaded (big module)
 async function loadSdk() {
@@ -83,7 +84,8 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
     txVersion: TxVersion.V0,
     computeBudgetConfig: { units: 600_000, microLamports: 100_000 },
   };
-  if (CFG.PLATFORM_ID) params.platformId = new PublicKey(CFG.PLATFORM_ID);
+  const pfid = platform.platformId();
+  if (pfid) params.platformId = pfid;
 
   const { transactions, extInfo } = await raydium.launchpad.createLaunchpad(params);
 

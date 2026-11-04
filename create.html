@@ -262,13 +262,14 @@ h1{margin:0;font-family:var(--display);font-weight:400;line-height:1.18;letter-s
     <div class="inner">
 
       <nav>
-        <a class="logo" href="index.html">index<span class="tld">.fun</span></a>
+        <a class="logo" href="index">index<span class="tld">.fun</span></a>
         <div class="links">
-          <a href="index.html#launches">Launches</a>
-          <a href="docs.html">How it works</a>
-          <a href="stats.html">Stats</a>
+          <a href="tokens">Tokens</a>
+          <a href="docs">How it works</a>
+          <a href="stats">Stats</a>
         </div>
         <div class="nav-right">
+          <a class="cta-halo sm" href="create"><span class="btn-inner">+ Launch</span></a>
           <button class="cta-halo sm" id="connect"><span class="btn-inner">Connect wallet</span></button>
         </div>
       </nav>
@@ -551,7 +552,7 @@ $("form").addEventListener("submit", async e=>{
     if(sub.error) throw new Error(sub.error);
 
     say("Launched! CA: " + prep.mint.slice(0,8) + "… — opening your token page.");
-    setTimeout(()=>location.href = "token.html?mint=" + prep.mint, 1200);
+    setTimeout(()=>location.href = "token?mint=" + prep.mint, 1200);
   }catch(err){
     busy(false);
     say("Launch failed: " + (err.message || err));

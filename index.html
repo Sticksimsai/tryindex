@@ -383,15 +383,12 @@ footer .fine{margin-top:12px;max-width:62em}
       <nav>
         <a class="logo" href="#">index<span class="tld">.fun</span></a>
         <div class="links">
-          <a href="#launches">Launches</a>
-          <a href="docs.html">How it works</a>
-          <a href="#basket">The Index</a>
-          <a href="stats.html">Stats</a>
+          <a href="tokens">Tokens</a>
+          <a href="docs">How it works</a>
+          <a href="stats">Stats</a>
         </div>
         <div class="nav-right">
-          <button class="icon-btn" id="search" aria-label="Search">
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
-          </button>
+          <a class="cta-halo sm" href="create"><span class="btn-inner">+ Launch</span></a>
           <button class="cta-halo sm" id="connect"><span class="btn-inner">Connect wallet</span></button>
         </div>
       </nav>
@@ -399,7 +396,7 @@ footer .fine{margin-top:12px;max-width:62em}
       <header class="hero">
         <h1>Stealth Meme Launches<br>All At The Same Price</h1>
         <p class="sub">Every token launches blind on Solana with a 3% dev cap<br>and 0% fees until it clears $100k</p>
-        <a class="cta-halo" id="launch-cta" href="create.html"><span class="btn-inner">Get started</span></a>
+        <a class="cta-halo" id="launch-cta" href="create"><span class="btn-inner">Get started</span></a>
       </header>
 
       <section class="deck-zone" id="launches">
@@ -409,7 +406,7 @@ footer .fine{margin-top:12px;max-width:62em}
       <section id="rules">
         <div class="sec-head">
           <h2>Four rules. No exceptions.</h2>
-          <p>Enforced by the program and the launch engine, not by promises. <a href="docs.html" style="color:#bdaffb;text-decoration:none">Read how a launch works →</a></p>
+          <p>Enforced by the program and the launch engine, not by promises. <a href="docs" style="color:#bdaffb;text-decoration:none">Read how a launch works →</a></p>
         </div>
         <div class="rules">
           <div class="rule">
@@ -477,8 +474,8 @@ footer .fine{margin-top:12px;max-width:62em}
         <div class="cols">
           <a class="logo" href="#">index<span class="tld">.fun</span></a>
           <div class="right">
-            <a href="docs.html">How it works</a>
-            <a href="stats.html">Stats</a>
+            <a href="docs">How it works</a>
+            <a href="stats">Stats</a>
           </div>
         </div>
         <p class="fine">tryindex.fun — built on Raydium LaunchLab. Memecoins are volatile and can go to zero; nothing on this page is financial advice. Example tokens and figures shown for preview.</p>
@@ -828,8 +825,7 @@ function say(msg){
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
 document.getElementById("connect").addEventListener("click", ()=>say("Wallet connect goes live with the devnet release."));
-document.getElementById("search").addEventListener("click", ()=>say("Search arrives with the live token feed."));
-document.addEventListener("click", e=>{ if(e.target.closest(".see")) location.href = "token.html"; });
+document.addEventListener("click", e=>{ if(e.target.closest(".see")) location.href = "token"; });
 </script>
 </body>
 </html>

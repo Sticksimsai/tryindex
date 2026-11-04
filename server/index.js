@@ -69,7 +69,7 @@ app.post("/api/launch/prepare", async (req, res) => {
     const out = await prepareLaunch({ creator, name, symbol: clean, uri, devBuyPct });
 
     /* lock the website to the token page, now that the CA exists */
-    meta.external_url = `${CFG.PUBLIC_URL}/token.html?mint=${out.mint}`;
+    meta.external_url = `${CFG.PUBLIC_URL}/token?mint=${out.mint}`;
     fs.writeFileSync(path.join(META_DIR, `${id}.json`), JSON.stringify(meta));
 
     pending.set(out.mint, {
@@ -117,7 +117,15 @@ app.get("/api/launches/:mint", (req, res) => {
 });
 
 /* -------- static site -------- */
-app.use(express.static(path.join(__dirname, "..")));
+/* vanity token links: /t/<mint-or-ticker> -> the live token page */
+app.get("/t/:q", (req, res) => {
+  const q = String(req.params.q);
+  const t = store.get(q) || store.list().find((l) => l.symbol === q.toUpperCase());
+  res.redirect(t ? `/token?mint=${t.mint}` : "/tokens");
+});
+
+/* clean URLs: /docs -> docs.html etc. */
+app.use(express.static(path.join(__dirname, ".."), { extensions: ["html"] }));
 
 app.listen(CFG.PORT, () => {
   console.log(`index.fun engine up on :${CFG.PORT} — network=${CFG.NETWORK} rpc=${CFG.RPC_URL}`);

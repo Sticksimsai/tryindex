@@ -41,6 +41,30 @@ function platformId() {
 }
 
 /** Derive, and create on-chain if missing. Called at boot; safe to re-run. */
+/* Find a CPMM fee-tier config that actually exists on this network.
+   Order: env override → Raydium API list → PDA(index 0..4) with a live account. */
+async function resolveCpConfig(s, cpmmProgram) {
+  const { PublicKey } = require("@solana/web3.js");
+  if (process.env.CP_CONFIG_ID) return new PublicKey(process.env.CP_CONFIG_ID);
+  const apiBase = CFG.IS_MAINNET ? "https://api-v3.raydium.io" : "https://api-v3-devnet.raydium.io";
+  try {
+    const r = await fetch(apiBase + "/main/cpmm-config");
+    const j = await r.json();
+    const list = j?.data || j || [];
+    if (Array.isArray(list) && list.length) {
+      const best = list.find((c) => c.tradeFeeRate === 2500) || list[0]; // prefer 0.25% tier
+      if (best?.id) return new PublicKey(best.id);
+    }
+  } catch (e) {
+    console.log("platform: cpmm-config API unavailable:", e.message);
+  }
+  for (let i = 0; i < 5; i++) {
+    const pda = s.getPdaAmmConfigId(cpmmProgram, i).publicKey;
+    if (await connection.getAccountInfo(pda)) return pda;
+  }
+  throw new Error("no live CPMM config found on " + CFG.NETWORK + " — set CP_CONFIG_ID env var");
+}
+
 async function ensurePlatform() {
   if (ensured) return platformId();
   const admin = adminKeypair();
@@ -94,7 +118,8 @@ async function ensurePlatform() {
   const cpmmProgram = CFG.IS_MAINNET
     ? s.CREATE_CPMM_POOL_PROGRAM
     : s.DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM;
-  const cpConfigId = getPdaAmmConfigId(cpmmProgram, 0).publicKey; // 0.25% tier
+  const cpConfigId = await resolveCpConfig(s, cpmmProgram);
+  console.log("platform: using cpConfigId", cpConfigId.toBase58());
 
   const M = 1_000_000; // scale denominator = 100%
   const { execute } = await raydium.launchpad.createPlatformConfig({

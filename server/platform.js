@@ -121,6 +121,52 @@ async function ensurePlatform() {
   const cpConfigId = await resolveCpConfig(s, cpmmProgram);
   console.log("platform: using cpConfigId", cpConfigId.toBase58());
 
+  /* PLATFORM_DEBUG=1: simulate variants, print anchor logs naming the failing check */
+  if (process.env.PLATFORM_DEBUG === "1") {
+    const { PublicKey } = require("@solana/web3.js");
+    const base = {
+      programId: pid,
+      platformAdmin: admin.publicKey,
+      platformClaimFeeWallet: admin.publicKey,
+      platformLockNftWallet: admin.publicKey,
+      platformVestingWallet: admin.publicKey,
+      cpConfigId,
+      migrateCpLockNftScale: { platformScale: new BN(250000), creatorScale: new BN(250000), burnScale: new BN(500000) },
+      transferFeeExtensionAuth: admin.publicKey,
+      creatorFeeRate: new BN(0),
+      feeRate: new BN(0),
+      name: "index", web: "https://launchonindex.fun", img: "https://launchonindex.fun",
+      txVersion: s.TxVersion.V0,
+    };
+    const variants = [
+      ["as-is", {}],
+      ["vestingWallet=default", { platformVestingWallet: PublicKey.default }],
+      ["feeRate=10000", { feeRate: new BN(10000) }],
+      ["vestDefault+fee10000", { platformVestingWallet: PublicKey.default, feeRate: new BN(10000) }],
+      ["docScales+fee10000", { migrateCpLockNftScale: { platformScale: new BN(100000), creatorScale: new BN(100000), burnScale: new BN(800000) }, feeRate: new BN(10000), platformVestingWallet: PublicKey.default }],
+    ];
+    for (const [label, over] of variants) {
+      try {
+        const { transactions } = await raydium.launchpad.createPlatformConfig({ ...base, ...over });
+        const tx = transactions ? transactions[0] : (await raydium.launchpad.createPlatformConfig({ ...base, ...over })).transactions?.[0];
+        const built = tx || null;
+        let vtx = built;
+        if (!vtx) {
+          const r2 = await raydium.launchpad.createPlatformConfig({ ...base, ...over });
+          vtx = r2.transaction || (r2.transactions && r2.transactions[0]);
+        }
+        vtx.sign([admin]);
+        const sim = await connection.simulateTransaction(vtx, { sigVerify: false, replaceRecentBlockhash: true });
+        const logs = (sim.value.logs || []).filter(l => /Error|error|left|right|Instruction:/.test(l)).slice(-6);
+        console.log(`probe[${label}]: err=${JSON.stringify(sim.value.err)} :: ${logs.join(" | ")}`);
+      } catch (e) {
+        console.log(`probe[${label}]: build failed: ${e.message || e}`);
+      }
+    }
+    console.log("probe done — set PLATFORM_DEBUG=0 and apply the passing variant");
+    return platformId();
+  }
+
   const M = 1_000_000; // scale denominator = 100%
   const { execute } = await raydium.launchpad.createPlatformConfig({
     programId: pid,

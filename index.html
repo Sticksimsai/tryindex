@@ -82,9 +82,9 @@ body{background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overfl
   @keyframes navIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
   .deck-zone .marquee{animation:deckIn .9s .55s cubic-bezier(.2,.7,.2,1) both}
   @keyframes deckIn{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
-  .btn.primary{animation:ctaGlow 3.4s 1.2s ease-in-out infinite}
-  @keyframes ctaGlow{50%{box-shadow:0 0 52px rgba(150,124,255,.75)}}
-  .hero .btn.primary{animation:rise .7s .16s cubic-bezier(.2,.7,.2,1) both, ctaGlow 3.4s 1.2s ease-in-out infinite}
+  .btn.big{animation:ctaGlow 3.4s 1.2s ease-in-out infinite}
+  @keyframes ctaGlow{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.28) inset,0 0 0 rgba(139,124,247,0)}50%{box-shadow:0 0 0 1px rgba(189,175,251,.55) inset,0 0 30px rgba(139,124,247,.35)}}
+  .hero .btn.big{animation:rise .7s .16s cubic-bezier(.2,.7,.2,1) both, ctaGlow 3.4s 1.2s ease-in-out infinite}
 }
 
 /* ---------- scroll reveals (applied by JS; no-JS users see everything) ---------- */
@@ -107,7 +107,8 @@ nav .links a:hover,nav .links a:focus-visible{color:#fff}
   transition:transform .15s,box-shadow .15s,background .15s;
 }
 .btn.outline{background:transparent;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.28) inset}
-.btn.outline:hover{box-shadow:0 0 0 1px rgba(255,255,255,.5) inset}
+.btn.outline:hover{box-shadow:0 0 0 1px rgba(189,175,251,.7) inset,0 0 34px rgba(139,124,247,.4);transform:translateY(-1px)}
+.btn.big{padding:.9em 2.5em;font-size:1.05rem;font-weight:600}
 .btn.primary{
   color:#17122e;font-weight:600;
   background:linear-gradient(180deg,var(--pill-a),var(--pill-b));
@@ -359,7 +360,7 @@ footer .fine{margin-top:12px;max-width:62em}
       <header class="hero">
         <h1>Stealth Meme Launches<br>All At The Same Price</h1>
         <p class="sub">Every token launches blind on Solana with a 3% dev cap<br>and 0% fees until it clears $100k</p>
-        <button class="btn primary" id="launch-cta">Get started</button>
+        <a class="btn outline big" id="launch-cta" href="create.html">Get started</a>
       </header>
 
       <section class="deck-zone" id="launches">
@@ -788,9 +789,8 @@ function say(msg){
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
 document.getElementById("connect").addEventListener("click", ()=>say("Wallet connect goes live with the devnet release."));
-document.getElementById("launch-cta").addEventListener("click", ()=>say("Launching opens at devnet — join the first cohort soon."));
 document.getElementById("search").addEventListener("click", ()=>say("Search arrives with the live token feed."));
-document.addEventListener("click", e=>{ if(e.target.closest(".see")) say("Token pages arrive with the live feed."); });
+document.addEventListener("click", e=>{ if(e.target.closest(".see")) location.href = "token.html"; });
 </script>
 </body>
 </html>

@@ -269,6 +269,7 @@ h1{margin:0;font-family:var(--display);font-weight:400;line-height:1.18;letter-s
           <a href="stats">Stats</a>
         </div>
         <div class="nav-right">
+          <a class="icon-btn" href="https://x.com/launchonindex" rel="noopener" aria-label="index on X"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M4 3h4.6l4.1 5.7L17.6 3H21l-6.6 8 7 10h-4.6l-4.5-6.3L7 21H3.5l7-8.4L4 3z"/></svg></a>
           <a class="cta-halo sm" href="create"><span class="btn-inner">+ Launch</span></a>
           <button class="cta-halo sm" id="connect"><span class="btn-inner">Connect wallet</span></button>
         </div>
@@ -307,7 +308,7 @@ h1{margin:0;font-family:var(--display);font-weight:400;line-height:1.18;letter-s
             </div>
             <div class="ffield locked">
               <label for="f-web">Website</label>
-              <input type="text" id="f-web" value="tryindex.fun/t/TOKEN" readonly aria-describedby="web-hint">
+              <input type="text" id="f-web" value="launchonindex.fun/t/TOKEN" readonly aria-describedby="web-hint">
               <span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
               <span class="hint" id="web-hint">Locked to your token's page on index — no fake sites, every link leads to the live chart.</span>
             </div>
@@ -404,7 +405,7 @@ function update(){
     `radial-gradient(150px 110px at 78% 22%, ${c2}, transparent 70%), linear-gradient(120deg, ${c1}, ${c2})`;
   $("pv-mark").textContent = name;
   $("pv-name").textContent = name;
-  $("f-web").value = "tryindex.fun/t/" + tick;
+  $("f-web").value = "launchonindex.fun/t/" + tick;
   $("pv-avatar").innerHTML = imgData
     ? `<img src="${imgData}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
     : pfp("$"+tick, c1);

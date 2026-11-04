@@ -237,8 +237,8 @@ nav .links a:hover,nav .links a:focus-visible{color:#fff}
           <div class="tok-head">
             <span class="tpf" id="t-pf"></span>
             <div class="tn">
-              <b>Snibb</b>
-              <span>$SNIBB · <a href="token.html">tryindex.fun/t/SNIBB</a> · <a href="https://x.com" rel="noopener">@snibbonsol</a></span>
+              <b id="t-name">Snibb</b>
+              <span id="t-links">$SNIBB · <a href="token.html">tryindex.fun/t/SNIBB</a> · <a href="https://x.com" rel="noopener">@snibbonsol</a></span>
             </div>
             <div class="price">
               <span class="pv num" id="t-price">$134.2k</span>
@@ -319,6 +319,26 @@ function pfp(tk, col){
 
 
 document.getElementById("t-pf").innerHTML = pfp("$SNIBB","#8b7cf7");
+
+/* live launch? populate the header from the engine */
+const mintParam = new URLSearchParams(location.search).get("mint");
+if(mintParam){
+  fetch("/api/launches/" + mintParam).then(r=>r.ok?r.json():null).then(t=>{
+    if(!t) return;
+    document.getElementById("t-name").textContent = t.name;
+    const net = t.network === "mainnet" ? "" : "?cluster=" + t.network;
+    document.getElementById("t-links").innerHTML =
+      "$" + t.symbol +
+      ' · <a href="https://solscan.io/token/' + t.mint + net + '" rel="noopener">' +
+      t.mint.slice(0,6) + "…" + t.mint.slice(-6) + "</a>" +
+      (t.twitter ? ' · <a href="' + t.twitter + '" rel="noopener">X</a>' : "");
+    if(t.image){
+      document.getElementById("t-pf").innerHTML =
+        '<img src="' + t.image + '" alt="" style="width:100%;height:100%;object-fit:cover">';
+    }
+    document.title = t.name + " on index";
+  }).catch(()=>{});
+}
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------------- candle chart (generated example feed) ---------------- */

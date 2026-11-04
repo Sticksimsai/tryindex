@@ -1,0 +1,19 @@
+{
+  "name": "tryindex-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "index.fun launch engine — sealed LaunchLab launches with atomic dev buy",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@raydium-io/raydium-sdk-v2": "0.2.64-alpha",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.95.8",
+    "bn.js": "^5.2.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "engines": { "node": ">=20" }
+}

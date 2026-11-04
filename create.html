@@ -253,6 +253,7 @@ h1{margin:0;font-family:var(--display);font-weight:400;line-height:1.18;letter-s
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (max-width:860px){nav .links{display:none}}
 </style>
+<script src="https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
 </head>
 <body>
 <div class="stage">
@@ -431,24 +432,6 @@ drop.addEventListener("drop", e=>{
   if(f){ $("file").files = e.dataTransfer.files; $("file").dispatchEvent(new Event("change")); }
 });
 
-/* dev buy slider */
-const SOL_PER_PCT = 2.3; /* cost of 1% of supply at the $20k floor, example */
-function devUpd(){
-  const v = +$("f-dev").value;
-  $("f-devout").textContent = v.toFixed(1) + "%";
-  $("pv-dev").textContent = v.toFixed(1) + "%";
-  $("f-devsol").textContent = v === 0
-    ? "No dev buy — you queue with everyone else"
-    : `≈ ${(v*SOL_PER_PCT).toFixed(1)} SOL at the $20k entry floor · the only privileged buy this token will ever have`;
-}
-$("f-dev").addEventListener("input", devUpd);
-
-$("form").addEventListener("submit", e=>{
-  e.preventDefault();
-  say("Sealed launches open at devnet — this preview doesn't deploy anything yet.");
-});
-
-update(); devUpd();
 
 const toast = document.getElementById("toast");
 let toastTimer;
@@ -460,6 +443,122 @@ function say(msg){
 }
 document.getElementById("connect").addEventListener("click", ()=>say("Wallet connect goes live with the devnet release."));
 
+
+/* ================= live launch engine wiring ================= */
+let engine = null;      /* /api/config payload when the backend is up */
+let walletPk = null;    /* connected wallet public key (base58) */
+
+fetch("/api/config").then(r=>r.ok?r.json():null).then(c=>{
+  if(c && c.ok){
+    engine = c;
+    devUpd();
+    if(c.network !== "mainnet") say("Engine connected — " + c.network + " mode. Launches are real on " + c.network + ".");
+  }
+}).catch(()=>{});
+
+function getProvider(){
+  return (window.phantom && window.phantom.solana) || window.solflare || window.solana || null;
+}
+
+/* take over the Connect wallet button from the shared toast handler */
+const cBtn0 = document.getElementById("connect");
+const cBtn = cBtn0.cloneNode(true);
+cBtn0.replaceWith(cBtn);
+function setWalletLabel(){
+  cBtn.querySelector(".btn-inner").textContent =
+    walletPk ? walletPk.slice(0,4) + "…" + walletPk.slice(-4) : "Connect wallet";
+}
+async function connectWallet(){
+  const p = getProvider();
+  if(!p){ say("No Solana wallet found — install Phantom or Solflare, then reload."); return null; }
+  try{
+    const res = await p.connect();
+    walletPk = (res.publicKey || p.publicKey).toString();
+    setWalletLabel();
+    say("Wallet connected.");
+    return p;
+  }catch{
+    say("Wallet connection was declined.");
+    return null;
+  }
+}
+cBtn.addEventListener("click", connectWallet);
+
+/* dev buy slider */
+function solPerPct(){ return engine ? engine.solPerPct : 0.8; }
+function devUpd(){
+  const v = +$("f-dev").value;
+  $("f-devout").textContent = v.toFixed(1) + "%";
+  $("pv-dev").textContent = v.toFixed(1) + "%";
+  $("f-devsol").textContent = v === 0
+    ? "No dev buy — you queue with everyone else"
+    : `≈ ${(v*solPerPct()).toFixed(2)} SOL · the only privileged buy this token will ever have`;
+}
+$("f-dev").addEventListener("input", devUpd);
+
+/* the launch flow */
+const launchBtn = document.querySelector(".form .cta-halo .btn-inner");
+function busy(b, label){
+  document.querySelector(".form .cta-halo").style.pointerEvents = b ? "none" : "";
+  launchBtn.textContent = label || (b ? "Sealing…" : "Launch sealed");
+}
+
+$("form").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const name = $("f-name").value.trim();
+  const tick = $("f-ticker").value.trim();
+  if(!name || !tick){ say("Give your token a name and a ticker first."); return; }
+
+  if(!engine){
+    say("Preview mode — the launch engine isn't connected on this deployment.");
+    return;
+  }
+  if(typeof solanaWeb3 === "undefined"){
+    say("Wallet library blocked — open the live site to launch.");
+    return;
+  }
+  const provider = getProvider();
+  if(!walletPk){
+    const p = await connectWallet();
+    if(!p) return;
+  }
+
+  try{
+    busy(true, "Sealing…");
+    const prep = await fetch("/api/launch/prepare", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        creator: walletPk,
+        name, symbol: tick,
+        twitter: $("f-x").value.trim(),
+        devBuyPct: +$("f-dev").value,
+        imageBase64: imgData || "",
+      }),
+    }).then(r=>r.json());
+    if(prep.error) throw new Error(prep.error);
+
+    busy(true, "Sign in wallet…");
+    const txs = prep.txs.map(b64 =>
+      solanaWeb3.VersionedTransaction.deserialize(Uint8Array.from(atob(b64), c=>c.charCodeAt(0))));
+    const signed = await provider.signAllTransactions(txs);
+    const signedB64 = signed.map(t=>btoa(String.fromCharCode(...t.serialize())));
+
+    busy(true, "Launching…");
+    const sub = await fetch("/api/launch/submit", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ mint: prep.mint, txs: signedB64 }),
+    }).then(r=>r.json());
+    if(sub.error) throw new Error(sub.error);
+
+    say("Launched! CA: " + prep.mint.slice(0,8) + "… — opening your token page.");
+    setTimeout(()=>location.href = "token.html?mint=" + prep.mint, 1200);
+  }catch(err){
+    busy(false);
+    say("Launch failed: " + (err.message || err));
+  }
+});
+
+update(); devUpd();
 
 </script>
 </body>

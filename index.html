@@ -362,10 +362,19 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .holding .t{font-weight:600;font-size:.82rem}
 .holding .w{font-family:var(--display);color:#bdaffb;font-size:1.02rem}
 .orb{
-  position:absolute;transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;
-  border:2.5px solid #15131f;pointer-events:none;background:#15131f;
+  position:absolute;border-radius:50%;overflow:hidden;
+  border:2px solid #15131f;pointer-events:none;background:#15131f;
 }
 .orb svg{width:100%;height:100%;display:block}
+.ring-tip{
+  position:absolute;pointer-events:none;z-index:5;white-space:nowrap;
+  background:#1b1827;border:1px solid rgba(189,175,251,.45);border-radius:10px;
+  padding:.4em .85em;font-size:.84rem;color:var(--muted);
+  opacity:0;transition:opacity .15s;box-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+.ring-tip.show{opacity:1}
+.ring-tip b{color:#fff;font-weight:600}
+.ring-tip .pc{font-family:var(--display);color:#bdaffb;margin-left:4px}
 .basket-note{font-size:.84rem;color:var(--muted);padding-top:6px}
 /* drop calculator */
 .calc{background:#111020;border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;display:grid;gap:12px}
@@ -661,79 +670,134 @@ size(); addEventListener("resize", size);
 const orbs = tokens.map(()=> {
   const o = document.createElement("div");
   o.className = "orb";
+  o._size = 0;
   ringWrap.appendChild(o);
   return o;
 });
+const tip = document.createElement("div");
+tip.className = "ring-tip";
+ringWrap.appendChild(tip);
 
 let cur = tokens.map(t=>t.w/100);
 let tgt = cur.slice();
 let spin = -Math.PI/2;
 let pulse = 0;
+let hover = -1;
+const GAP = 0.07;
+const TAU = Math.PI*2;
 
 function geometry(){
-  return {cx:W/2, cy:H/2, R:Math.min(W,H)/2 - 30};
+  return {cx:W/2, cy:H/2, R:Math.min(W,H)/2 - 34, LW:Math.max(13, (Math.min(W,H)/2-34)*0.15)};
 }
+function segs(){
+  const total = cur.reduce((a,b)=>a+b,0);
+  let a = spin;
+  return cur.map(c=>{
+    const frac = c/total;
+    const sg = {a0:a + GAP/2, a1:a + frac*TAU - GAP/2, mid:a + frac*Math.PI, frac};
+    a += frac*TAU;
+    return sg;
+  });
+}
+
 function draw(){
   ctx.clearRect(0,0,W,H);
-  const {cx,cy,R} = geometry();
-  const LW = Math.max(16, R*0.17);
-  const GAP = 0.07;
-  const total = cur.reduce((a,b)=>a+b,0);
-  let a = spin;
-  for(let i=0;i<cur.length;i++){
-    const frac = cur[i]/total;
-    const sweep = frac*(Math.PI*2) - GAP;
-    if(sweep>0.02){
-      ctx.beginPath();
-      ctx.lineWidth = LW + (pulse*3);
-      ctx.lineCap = "round";
-      ctx.strokeStyle = tokens[i].c;
-      ctx.shadowColor = tokens[i].c;
-      ctx.shadowBlur = 14 + pulse*22;
-      ctx.arc(cx,cy,R,a + GAP/2, a + GAP/2 + sweep);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-    a += frac*(Math.PI*2);
-  }
+  const {cx,cy,R,LW} = geometry();
+  /* track */
   ctx.beginPath();
-  ctx.strokeStyle = "rgba(255,255,255,.05)";
-  ctx.lineWidth = 1;
-  ctx.arc(cx,cy,R-LW/2-7,0,Math.PI*2);
+  ctx.lineWidth = LW;
+  ctx.strokeStyle = "rgba(255,255,255,.045)";
+  ctx.arc(cx,cy,R,0,TAU);
   ctx.stroke();
+  const list = segs();
+  ctx.lineCap = "round";
+  for(let i=0;i<list.length;i++){
+    const sg = list[i];
+    if(sg.a1 - sg.a0 < 0.02) continue;
+    const hl = i === hover;
+    /* soft halo pass */
+    ctx.beginPath();
+    ctx.lineWidth = LW + (hl ? 12 : 7) + pulse*4;
+    ctx.strokeStyle = tokens[i].c + (hl ? "4d" : "26");
+    ctx.arc(cx,cy,R,sg.a0,sg.a1);
+    ctx.stroke();
+    /* crisp core */
+    ctx.beginPath();
+    ctx.lineWidth = hl ? LW + 2.5 : LW;
+    ctx.strokeStyle = tokens[i].c;
+    ctx.arc(cx,cy,R,sg.a0,sg.a1);
+    ctx.stroke();
+  }
 }
-function placeOrbs(){
+
+function placeOrbs(dt){
   const {cx,cy,R} = geometry();
-  const total = cur.reduce((a,b)=>a+b,0);
-  let a = spin;
-  for(let i=0;i<cur.length;i++){
-    const frac = cur[i]/total;
-    const mid = a + frac*Math.PI;
-    const o = orbs[i];
-    const sz = Math.round(Math.max(28, Math.min(56, 22 + frac*115)));
-    o.style.width = o.style.height = sz + "px";
-    o.style.left = (cx + Math.cos(mid)*R) + "px";
-    o.style.top  = (cy + Math.sin(mid)*R) + "px";
+  const list = segs();
+  for(let i=0;i<orbs.length;i++){
+    const o = orbs[i], sg = list[i];
+    const target = Math.round(Math.max(26, Math.min(46, 20 + sg.frac*95)));
+    o._size += (target - o._size) * (dt ? 1-Math.exp(-8*dt) : 1);
+    const szn = o._size;
+    o.style.width = o.style.height = szn.toFixed(1) + "px";
+    const x = cx + Math.cos(sg.mid)*R, y = cy + Math.sin(sg.mid)*R;
+    const scale = i === hover ? 1.15 : 1;
+    o.style.left = x + "px";
+    o.style.top  = y + "px";
+    o.style.transform = `translate(-50%,-50%) scale(${scale})`;
     if(o.dataset.t !== tokens[i].t){
       o.dataset.t = tokens[i].t;
       o.innerHTML = pfp(tokens[i].t, tokens[i].c);
-      o.style.boxShadow = `0 0 16px ${tokens[i].c}80, 0 4px 14px rgba(0,0,0,.5)`;
+      o.style.boxShadow = `0 0 10px ${tokens[i].c}55, 0 3px 10px rgba(0,0,0,.4)`;
     }
-    a += frac*(Math.PI*2);
   }
 }
 
-function frame(){
-  let moving = false;
+/* hover: segment detection + tooltip */
+function onMove(e){
+  const r = cv.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  const {cx,cy,R,LW} = geometry();
+  const dx = x-cx, dy = y-cy;
+  const dist = Math.hypot(dx,dy);
+  let h = -1;
+  if(Math.abs(dist - R) < LW*2){
+    let ang = Math.atan2(dy,dx);
+    let rel = ((ang - spin) % TAU + TAU) % TAU;
+    let acc = 0;
+    const total = cur.reduce((a,b)=>a+b,0);
+    for(let i=0;i<cur.length;i++){
+      acc += cur[i]/total*TAU;
+      if(rel < acc){ h = i; break; }
+    }
+  }
+  hover = h;
+  if(h >= 0){
+    tip.innerHTML = `<b>${tokens[h].t}</b><span class="pc num">${tokens[h].w}%</span>`;
+    tip.style.left = Math.min(x + 14, W - 90) + "px";
+    tip.style.top  = (y - 34) + "px";
+    tip.classList.add("show");
+    cv.style.cursor = "pointer";
+  }else{
+    tip.classList.remove("show");
+    cv.style.cursor = "";
+  }
+}
+cv.style.pointerEvents = "auto";
+cv.addEventListener("mousemove", onMove);
+cv.addEventListener("mouseleave", ()=>{ hover=-1; tip.classList.remove("show"); cv.style.cursor=""; });
+
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last)/1000); last = now;
+  const k = 1 - Math.exp(-5*dt);
   for(let i=0;i<cur.length;i++){
     const d = tgt[i]-cur[i];
-    if(Math.abs(d) > 0.0004){ cur[i] += d*0.06; moving = true; }
-    else cur[i] = tgt[i];
+    cur[i] = Math.abs(d) > 0.0002 ? cur[i] + d*k : tgt[i];
   }
-  if(!reduceMotion) spin += 0.0012;
-  pulse = Math.max(0, pulse - 0.015);
-  draw(); placeOrbs();
-  if(!reduceMotion || moving) requestAnimationFrame(frame);
+  spin += dt*0.055;
+  pulse = Math.max(0, pulse - dt*1.4);
+  draw(); placeOrbs(dt);
+  requestAnimationFrame(frame);
 }
 
 const flag = document.getElementById("rebalance-flag");
@@ -762,10 +826,10 @@ function rebalance(){
   setTimeout(()=>renderHoldings(), 2000);
 }
 
-draw(); placeOrbs();
+draw(); placeOrbs(0);
 if(!reduceMotion){
   requestAnimationFrame(frame);
-  setInterval(rebalance, 7000);
+  setInterval(rebalance, 8000);
 }
 
 /* ================= ambient particles in the frame ================= */

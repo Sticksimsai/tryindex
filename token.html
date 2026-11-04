@@ -239,28 +239,28 @@ nav .links a:hover,nav .links a:focus-visible{color:#fff}
           <div class="tok-head">
             <span class="tpf" id="t-pf"></span>
             <div class="tn">
-              <b id="t-name">Snibb</b>
-              <span id="t-links">$SNIBB · <a href="token">launchonindex.fun/t/SNIBB</a> · <a href="https://x.com" rel="noopener">@snibbonsol</a></span>
+              <b id="t-name">Loading…</b>
+              <span id="t-links">—</span>
             </div>
             <div class="price">
-              <span class="pv num" id="t-price">$134.2k</span>
-              <span class="pc up num" id="t-chg">+18.4% · 24h</span>
+              <span class="pv num" id="t-price">$20k</span>
+              <span class="pc num" id="t-chg" style="color:var(--muted)">entry mcap</span>
             </div>
           </div>
           <div class="tok-stats">
-            <div class="ts"><span class="l">MCAP</span><span class="v num" id="t-mc">$134.2k</span></div>
-            <div class="ts"><span class="l">Liquidity</span><span class="v num">$61.0k</span></div>
-            <div class="ts"><span class="l">Holders</span><span class="v num">3,105</span></div>
-            <div class="ts"><span class="l">Vol 24h</span><span class="v num">412 SOL</span></div>
-            <div class="ts"><span class="l">Status</span><span class="v" style="color:#6ee7a0">Graduated</span></div>
+            <div class="ts"><span class="l">MCAP</span><span class="v num" id="t-mc">$20k</span></div>
+            <div class="ts"><span class="l">Liquidity</span><span class="v num">—</span></div>
+            <div class="ts"><span class="l">Holders</span><span class="v num">—</span></div>
+            <div class="ts"><span class="l">Vol 24h</span><span class="v num">—</span></div>
+            <div class="ts"><span class="l">Status</span><span class="v" style="color:#bdaffb">On the curve</span></div>
           </div>
-          <div class="chartwrap"><canvas id="chart" aria-label="Live market cap candle chart for Snibb — example feed"></canvas></div>
+          <div class="chartwrap"><canvas id="chart" aria-label="Price chart — recording starts with the first trades"></canvas></div>
           <div class="tf">
             <button class="tfb" data-tf="1m">1m</button>
             <button class="tfb on" data-tf="5m">5m</button>
             <button class="tfb" data-tf="15m">15m</button>
             <button class="tfb" data-tf="1h">1h</button>
-            <span class="live"><i></i>Live · example feed</span>
+            <span class="live" style="color:var(--muted)"><i style="background:var(--muted);box-shadow:none"></i>Awaiting trades</span>
           </div>
         </div>
 
@@ -270,20 +270,20 @@ nav .links a:hover,nav .links a:focus-visible{color:#fff}
             <div class="txs" id="txs"></div>
           </div>
           <div class="scard">
-            <span class="st">Index status <span class="badge-in">IN THE INDEX</span></span>
+            <span class="st">Index status <span class="badge-in">NOT IN THE INDEX YET</span></span>
             <div>
-              <div class="irow"><span class="k">Index weight</span><span class="v l num">38%</span></div>
-              <div class="irow"><span class="k">Last rotation</span><span class="v num">27 Oct · stayed in</span></div>
-              <div class="irow"><span class="k">Paid to $INDEX holders 7d</span><span class="v g num">64 SOL</span></div>
+              <div class="irow"><span class="k">Index weight</span><span class="v l num">—</span></div>
+              <div class="irow"><span class="k">Last rotation</span><span class="v num">—</span></div>
+              <div class="irow"><span class="k">Paid to $INDEX holders 7d</span><span class="v g num">0 SOL</span></div>
             </div>
           </div>
           <div class="scard">
             <span class="st">War chest &amp; fees</span>
             <div>
-              <div class="irow"><span class="k">War chest balance</span><span class="v num">38.2 SOL</span></div>
-              <div class="irow"><span class="k">Buybacks 7d</span><span class="v num">11.4 SOL</span></div>
-              <div class="irow"><span class="k">Creator fees earned</span><span class="v g num">21.7 SOL</span></div>
-              <div class="irow"><span class="k">Launched</span><span class="v num">5h ago · sealed</span></div>
+              <div class="irow"><span class="k">War chest balance</span><span class="v num">0 SOL</span></div>
+              <div class="irow"><span class="k">Buybacks 7d</span><span class="v num">0 SOL</span></div>
+              <div class="irow"><span class="k">Creator fees earned</span><span class="v g num">0 SOL</span></div>
+              <div class="irow"><span class="k">Launched</span><span class="v num" id="t-age">—</span></div>
             </div>
             <button class="claimb" id="claim">Claim creator fees</button>
           </div>
@@ -320,171 +320,89 @@ function pfp(tk, col){
 }
 
 
-document.getElementById("t-pf").innerHTML = pfp("$SNIBB","#8b7cf7");
-
-/* live launch? populate the header from the engine */
-const mintParam = new URLSearchParams(location.search).get("mint");
-if(mintParam){
-  fetch("/api/launches/" + mintParam).then(r=>r.ok?r.json():null).then(t=>{
-    if(!t) return;
-    document.getElementById("t-name").textContent = t.name;
-    const net = t.network === "mainnet" ? "" : "?cluster=" + t.network;
-    document.getElementById("t-links").innerHTML =
-      "$" + t.symbol +
-      ' · <a href="https://solscan.io/token/' + t.mint + net + '" rel="noopener">' +
-      t.mint.slice(0,6) + "…" + t.mint.slice(-6) + "</a>" +
-      (t.twitter ? ' · <a href="' + t.twitter + '" rel="noopener">X</a>' : "");
-    if(t.image){
-      document.getElementById("t-pf").innerHTML =
-        '<img src="' + t.image + '" alt="" style="width:100%;height:100%;object-fit:cover">';
-    }
-    document.title = t.name + " on index";
-  }).catch(()=>{});
-}
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const mintParam = new URLSearchParams(location.search).get("mint");
+if(!mintParam) location.replace("tokens");
 
-/* ---------------- candle chart (generated example feed) ---------------- */
+function hues(str){let h=7;for(const c of str||"x")h=(h*31+c.charCodeAt(0))>>>0;return [`hsl(${h%360} 70% 60%)`,`hsl(${(h%360+70)%360} 75% 62%)`];}
+const agoTxt = t => {const s=(Date.now()-t)/1000;return s<90?Math.round(s)+"s":s<5400?Math.round(s/60)+"m":s<172800?Math.round(s/3600)+"h":Math.round(s/86400)+"d";};
+
+document.getElementById("t-pf").innerHTML = pfp("$?", "#8b7cf7");
+
+fetch("/api/launches/" + mintParam).then(r=>r.ok?r.json():null).then(t=>{
+  if(!t){
+    document.getElementById("t-name").textContent = "Token not found";
+    document.getElementById("t-links").textContent = "This mint wasn't launched on index.";
+    return;
+  }
+  document.getElementById("t-name").textContent = t.name;
+  const net = t.network === "mainnet" ? "" : "?cluster=" + t.network;
+  document.getElementById("t-links").innerHTML =
+    "$" + t.symbol +
+    ' · <a href="https://solscan.io/token/' + t.mint + net + '" rel="noopener">' +
+    t.mint.slice(0,6) + "…" + t.mint.slice(-6) + "</a>" +
+    ' · <a href="/t/' + t.symbol + '">launchonindex.fun/t/' + t.symbol + "</a>" +
+    (t.twitter ? ' · <a href="' + t.twitter + '" rel="noopener">X</a>' : "");
+  const [c1] = hues(t.symbol);
+  document.getElementById("t-pf").innerHTML = t.image
+    ? '<img src="' + t.image + '" alt="" style="width:100%;height:100%;object-fit:cover">'
+    : pfp("$"+t.symbol, c1);
+  const age = document.getElementById("t-age");
+  if(age && t.launchedAt) age.textContent = agoTxt(t.launchedAt) + " ago · sealed";
+  document.title = t.name + " on index";
+}).catch(()=>{});
+
+/* ---------------- chart: honest empty state until the trade indexer lands ---------------- */
 const cv = document.getElementById("chart");
 const ctx = cv.getContext("2d");
 let W=0,H=420,DPR=Math.min(devicePixelRatio||1,2);
 function size(){
   const r = cv.parentElement.getBoundingClientRect();
   W = Math.max(300, r.width-4);
-  H = innerWidth < 700 ? 320 : 420;
+  H = innerWidth < 700 ? 300 : 400;
   cv.width = W*DPR; cv.height = H*DPR;
   cv.style.height = H+"px";
   ctx.setTransform(DPR,0,0,DPR,0,0);
 }
-size(); addEventListener("resize", ()=>{size(); drawChart();});
-
-const N = 80;
-let candles = [];
-(function seed(){
-  let p = 96;
-  for(let i=0;i<N;i++){
-    const o = p;
-    const c = Math.max(60, o + 0.35 + (Math.random()-0.48)*2.1);
-    const h = Math.max(o,c) + Math.random()*1.2;
-    const l = Math.min(o,c) - Math.random()*1.2;
-    candles.push({o,h,l,c,v: 4+Math.random()*14});
-    p = c;
-  }
-})();
-
-function fmtK(v){ return "$"+v.toFixed(1)+"k"; }
-function drawChart(){
+function drawEmpty(){
   ctx.clearRect(0,0,W,H);
-  const padL = 8, padR = 60, padT = 12, volH = 54, padB = 20;
-  const chH = H - padT - volH - padB;
-  const lo = Math.min(...candles.map(c=>c.l)) - 1;
-  const hi = Math.max(...candles.map(c=>c.h)) + 1;
-  const y = v => padT + (hi - v)/(hi - lo)*chH;
-  const cw = (W - padL - padR)/candles.length;
+  const padL = 8, padR = 60, padT = 12, padB = 24;
   ctx.font = "10px Poppins, sans-serif";
-  ctx.textAlign = "left";
   for(let g=0; g<5; g++){
-    const v = lo + (hi-lo)*g/4;
-    const gy = y(v);
+    const gy = padT + (H-padT-padB)*g/4;
     ctx.strokeStyle = "rgba(255,255,255,.05)";
     ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W-padR, gy); ctx.stroke();
-    ctx.fillStyle = "#6f6b85";
-    ctx.fillText(fmtK(v), W-padR+6, gy+3);
   }
-  const maxV = Math.max(...candles.map(c=>c.v));
-  candles.forEach((c,i)=>{
-    const x = padL + i*cw + cw/2;
-    const up = c.c >= c.o;
-    const col = up ? "#4ade80" : "#f87171";
-    ctx.fillStyle = up ? "rgba(74,222,128,.25)" : "rgba(248,113,113,.22)";
-    const vh = c.v/maxV*volH;
-    ctx.fillRect(x-cw*0.32, H-padB-vh, cw*0.64, vh);
-    ctx.strokeStyle = col;
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, y(c.h)); ctx.lineTo(x, y(c.l)); ctx.stroke();
-    ctx.fillStyle = col;
-    const by1 = y(Math.max(c.o,c.c)), by2 = y(Math.min(c.o,c.c));
-    ctx.fillRect(x-cw*0.32, by1, cw*0.64, Math.max(1.4, by2-by1));
-  });
-  const last = candles[candles.length-1];
-  const ly = y(last.c);
-  ctx.strokeStyle = "rgba(189,175,251,.5)";
-  ctx.setLineDash([4,4]);
-  ctx.beginPath(); ctx.moveTo(padL, ly); ctx.lineTo(W-padR, ly); ctx.stroke();
+  /* entry line at $20k */
+  const ey = H - padB - (H-padT-padB)*0.2;
+  ctx.strokeStyle = "rgba(189,175,251,.4)";
+  ctx.setLineDash([4,5]);
+  ctx.beginPath(); ctx.moveTo(padL, ey); ctx.lineTo(W-padR, ey); ctx.stroke();
   ctx.setLineDash([]);
-  const up = last.c >= last.o;
-  ctx.fillStyle = up ? "#16301f" : "#331616";
-  ctx.strokeStyle = up ? "#4ade80" : "#f87171";
-  ctx.beginPath(); ctx.roundRect(W-padR+2, ly-9, 56, 18, 5); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = up ? "#6ee7a0" : "#f87171";
-  ctx.fillText(fmtK(last.c), W-padR+8, ly+3);
+  ctx.fillStyle = "#9b97ad";
+  ctx.fillText("$20k entry", W-padR+6, ey+3);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#dcd9ea";
+  ctx.font = "600 13px Poppins, sans-serif";
+  ctx.fillText("No trades recorded yet", W/2, H/2 - 8);
+  ctx.font = "11px Poppins, sans-serif";
+  ctx.fillStyle = "#9b97ad";
+  ctx.fillText("The chart starts drawing from this token's first curve trade.", W/2, H/2 + 12);
+  ctx.textAlign = "left";
 }
-drawChart();
+size(); drawEmpty();
+addEventListener("resize", ()=>{size(); drawEmpty();});
 
-let tickCount = 0;
-function tick(){
-  const c = candles[candles.length-1];
-  c.c = Math.max(60, c.c + (Math.random()-0.47)*1.4);
-  c.h = Math.max(c.h, c.c);
-  c.l = Math.min(c.l, c.c);
-  c.v += Math.random()*1.5;
-  if(++tickCount % 7 === 0){
-    candles.push({o:c.c, h:c.c, l:c.c, c:c.c, v:2+Math.random()*4});
-    candles.shift();
-  }
-  const mc = candles[candles.length-1].c;
-  document.getElementById("t-price").textContent = fmtK(mc);
-  document.getElementById("t-mc").textContent = fmtK(mc);
-  const chg = (mc/96-1)*100;
-  const chEl = document.getElementById("t-chg");
-  chEl.textContent = (chg>=0?"+":"") + chg.toFixed(1) + "% · 24h";
-  chEl.className = "pc num " + (chg>=0?"up":"dn");
-  drawChart();
-}
-if(!reduceMotion) setInterval(tick, 1500);
-
-/* timeframe pills (visual in preview) */
 document.querySelectorAll(".tfb").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".tfb").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");
 }));
 
-/* ---------------- tx feed ---------------- */
-const txsEl = document.getElementById("txs");
-function wallet(){
-  const c = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789";
-  const r = n => Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join("");
-  return r(4)+"…"+r(4);
-}
-function txRow(fresh){
-  const buy = Math.random() < 0.56;
-  const sol = (Math.random()*3.2+0.05).toFixed(2);
-  const tokens = Math.round(sol*7430).toLocaleString();
-  return {buy, sol, tokens, w:wallet(), t:Date.now(), fresh};
-}
-let txRows = [];
-for(let i=0;i<9;i++) txRows.push(txRow(false));
-function renderTx(){
-  txsEl.innerHTML = txRows.map(r=>{
-    const s = Math.round((Date.now()-r.t)/1000);
-    const ago = s<3 ? "just now" : s<60 ? s+"s ago" : Math.floor(s/60)+"m ago";
-    return `<div class="tx ${r.buy?"buy":"sell"} ${r.fresh?"new":""}">
-      <span class="ty">${r.buy?"B":"S"}</span>
-      <div class="mid"><span class="w">${r.w}</span><span class="d">${r.tokens} SNIBB</span></div>
-      <div class="amt"><b>${r.buy?"+":"−"}${r.sol} SOL</b><span>${ago}</span></div>
-    </div>`;
-  }).join("");
-}
-renderTx();
-if(!reduceMotion){
-  setInterval(()=>{
-    txRows.forEach(r=>r.fresh=false);
-    txRows.unshift(txRow(true));
-    txRows = txRows.slice(0,9);
-    renderTx();
-  }, 2300);
-}
+/* ---------------- trades: empty until indexer ---------------- */
+document.getElementById("txs").innerHTML =
+  '<p style="margin:0;padding-block:28px;text-align:center;color:var(--muted);font-size:.88rem">No trades yet — buys and sells appear here live.</p>';
 
-document.getElementById("claim").addEventListener("click", ()=>say("Creator fee claims go live with the devnet release."));
+document.getElementById("claim").addEventListener("click", ()=>say("Creator fees accrue after graduation — nothing to claim yet."));
 
 const toast = document.getElementById("toast");
 let toastTimer;
@@ -494,7 +412,7 @@ function say(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
-document.getElementById("connect").addEventListener("click", ()=>say("Wallet connect goes live with the devnet release."));
+document.getElementById("connect").addEventListener("click", ()=>say("Connect your wallet on the launch page — one click from “+ Launch”."));
 
 
 </script>

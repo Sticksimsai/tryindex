@@ -341,12 +341,6 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .ring-core .lbl{color:var(--muted);font-size:.84rem}
 .ring-core .val{font-family:var(--display);font-size:1.5rem}
 .ring-core .cd{color:#bdaffb;font-weight:500;font-size:.9rem}
-.rebalance-flag{
-  position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
-  font-size:.78rem;font-weight:600;color:#6ee7a0;letter-spacing:.04em;
-  opacity:0;transition:opacity .4s;white-space:nowrap;
-}
-.rebalance-flag.show{opacity:1}
 .basket-copy{display:grid;gap:15px;min-width:0}
 .basket-copy p{margin:0;color:var(--muted)}
 .holdings{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:10px;margin-top:2px}
@@ -376,6 +370,19 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .ring-tip b{color:#fff;font-weight:600}
 .ring-tip .pc{font-family:var(--display);color:#bdaffb;margin-left:4px}
 .basket-note{font-size:.84rem;color:var(--muted);padding-top:6px}
+.istat-list{display:grid;margin-top:2px}
+.istat{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding-block:9px;border-bottom:1px solid rgba(255,255,255,.06);font-size:.95rem}
+.istat:last-child{border-bottom:0}
+.istat .k{color:var(--muted)}
+.istat b{font-weight:600}
+.track.static{animation:none;width:100%;justify-content:center;flex-wrap:wrap;row-gap:28px;padding-inline:clamp(18px,3.4vw,48px)}
+.track.static article{transform:none}
+.empty-launch{
+  display:grid;gap:12px;justify-items:center;text-align:center;color:var(--muted);
+  border:1.5px dashed rgba(189,175,251,.3);border-radius:22px;
+  padding:44px clamp(20px,6vw,90px);
+}
+.empty-launch b{color:#fff;font-family:var(--display);font-size:1.15rem;letter-spacing:.02em}
 /* drop calculator */
 .calc{background:#111020;border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;display:grid;gap:12px}
 .calc .ch{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -505,31 +512,21 @@ footer .fine{margin-top:12px;max-width:62em}
           <div class="ring-wrap">
             <canvas id="ring" aria-hidden="true"></canvas>
             <div class="ring-core">
-              <span class="lbl">Next rotation</span>
-              <span class="val num" id="countdown">—</span>
-              <span class="cd">Mondays 00:00 UTC</span>
+              <span class="lbl">The Index</span>
+              <span class="val num" id="grad-count">0 / 5</span>
+              <span class="cd">tokens graduated</span>
             </div>
-            <span class="rebalance-flag" id="rebalance-flag">REBALANCED</span>
           </div>
           <div class="basket-copy">
             <h2>Hold one token. Earn the top five.</h2>
-            <p>Hold $INDEX and every week you're distributed the five best-performing tokens launched here — a rotating basket, rebalanced each Monday by graduated-pool volume. Winners rotate in, laggards rotate out. You never have to pick.</p>
-            <div class="holdings" id="holdings"></div>
-            <div class="calc">
-              <span class="ch">Estimate your weekly drop</span>
-              <div class="crow">You hold <output id="calc-amt" for="calc-range">1,000,000</output> $INDEX</div>
-              <input type="range" id="calc-range" min="0" max="5000000" step="50000" value="1000000" aria-label="Amount of $INDEX held">
-              <div class="cout">
-                <div class="cstat"><span class="cl">Your share</span><span class="cv num" id="calc-share">1.00%</span></div>
-                <div class="cstat"><span class="cl">Est. weekly drop</span><span class="cv g num" id="calc-drop">1.72 SOL</span></div>
-                <div class="cstat"><span class="cl">Paid in</span><span class="cv" style="font-size:.95rem;align-self:center">top 5 tokens</span></div>
-              </div>
-              <p class="cnote">Based on last week's 172 SOL holder pot and 100M circulating $INDEX — example figures.</p>
+            <p>Hold $INDEX and every week you're distributed the five best-performing tokens launched here — rebalanced each Monday by graduated-pool volume. Winners rotate in, laggards rotate out. You never have to pick.</p>
+            <div class="istat-list">
+              <div class="istat"><span class="k">Graduated tokens</span><b class="num" id="is-grad">0 / 5</b></div>
+              <div class="istat"><span class="k">Reward pot</span><b class="num">0 SOL</b></div>
+              <div class="istat"><span class="k">Next rotation</span><b class="num" id="rot-in">—</b></div>
+              <div class="istat"><span class="k">Schedule</span><b>Mondays 00:00 UTC</b></div>
             </div>
-            <div class="history" id="history">
-              <span class="hl">Previous rotations</span>
-            </div>
-            <p class="basket-note">Funded by post-graduation fees and each token's war chest — no new supply is ever minted to pay rewards. Preview shows example weights rebalancing.</p>
+            <p class="basket-note">The first rotation unlocks when five tokens graduate past $100k. The pot accrues only from post-graduation fees — no new supply is ever minted to pay rewards.</p>
           </div>
         </div>
       </section>
@@ -543,7 +540,7 @@ footer .fine{margin-top:12px;max-width:62em}
           <a href="https://x.com/launchonindex" rel="noopener">X / Twitter</a>
           </div>
         </div>
-        <p class="fine">launchonindex.fun — built on Raydium LaunchLab. Memecoins are volatile and can go to zero; nothing on this page is financial advice. Example tokens and figures shown for preview.</p>
+        <p class="fine">launchonindex.fun — built on Raydium LaunchLab. Memecoins are volatile and can go to zero; nothing on this page is financial advice.</p>
       </footer>
 
     </div>
@@ -556,57 +553,8 @@ footer .fine{margin-top:12px;max-width:62em}
 /* ---------- icons ---------- */
 const icoLink = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.1 0l2.5-2.5a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.5 2.5a5 5 0 0 0 7.1 7.1L13 19.1"/></svg>`;
 const icoX    = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3h4.6l4.1 5.7L17.6 3H21l-6.6 8 7 10h-4.6l-4.5-6.3L7 21H3.5l7-8.4L4 3z"/></svg>`;
-const icoChat = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8z"/></svg>`;
 const icoSol  = `<svg viewBox="0 0 398 312" aria-hidden="true"><defs><linearGradient id="solg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9945FF"/><stop offset="1" stop-color="#14F195"/></linearGradient></defs><path fill="url(#solg)" d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z"/><path fill="url(#solg)" d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z"/><path fill="url(#solg)" d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z"/></svg>`;
 
-/* ---------- launches (swap for live feed at integration) ---------- */
-const launches = [
-  {name:"Glorp",    mcap:"$86.4k", prog:"86% to $100k", ago:"38m ago", hue1:"#6d5ae6", hue2:"#f472b6"},
-  {name:"Wagyu",    mcap:"$61.9k", prog:"62% to $100k", ago:"1h ago",  hue1:"#f7b955", hue2:"#ef4444"},
-  {name:"Snibb",    mcap:"$134k",  prog:"Graduated",    ago:"5h ago",  hue1:"#4ade80", hue2:"#60a5fa"},
-  {name:"Moon Mop", mcap:"$27.3k", prog:"27% to $100k", ago:"12m ago", hue1:"#60a5fa", hue2:"#8b7cf7"},
-  {name:"Crumb",    mcap:"$48.7k", prog:"49% to $100k", ago:"2h ago",  hue1:"#f472b6", hue2:"#f7b955"},
-  {name:"Zoink",    mcap:"$112k",  prog:"Graduated",    ago:"9h ago",  hue1:"#34d399", hue2:"#6d5ae6"},
-];
-
-function cardHTML(t, hidden){
-  return `
-  <article class="card" ${hidden ? 'aria-hidden="true"' : ""}>
-    <div class="banner" style="background:
-      radial-gradient(150px 110px at 78% 22%, ${t.hue2}66, transparent 70%),
-      linear-gradient(120deg, ${t.hue1}, ${t.hue2})">
-      <span class="mark" aria-hidden="true">${t.name}</span>
-      <span class="avatar" style="background:linear-gradient(140deg,#fff,${t.hue2})">${t.name[0]}</span>
-      <span class="socials">${icoLink}${icoX}${icoChat}</span>
-    </div>
-    <div class="card-body">
-      <div class="id-row">
-        <div class="who">
-          <span class="name">${t.name}</span>
-          <span class="chain">${icoSol} Solana</span>
-        </div>
-        <span class="when">Launched ${t.ago}</span>
-      </div>
-      <div class="stats">
-        <div class="stat"><span class="lbl">MCAP</span><span class="val num">${t.mcap}</span></div>
-        <div class="stat"><span class="lbl">Curve</span><span class="val num">${t.prog}</span></div>
-        <div class="stat"><span class="lbl">Dev buy</span><span class="val">≤ 3%</span></div>
-      </div>
-      <button class="btn see" ${hidden ? 'tabindex="-1"' : ""}>See token</button>
-    </div>
-  </article>`;
-}
-
-const track = document.getElementById("track");
-track.innerHTML = launches.map(t=>cardHTML(t,false)).join("") + launches.map(t=>cardHTML(t,true)).join("");
-
-/* ================= index ring — pfp orbit + rebalance animation =================
-   Five arcs sized by weight, each carrying its token's pfp on the ring. Weekly
-   rotation simulated: weights drift, the laggard can rotate out for a bench
-   token, arcs and pfps glide to their new spots. Honors prefers-reduced-motion. */
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/* original mascot pfps, generated per ticker (seeded faces, meme-pfp style) */
 function pfp(tk, col){
   let h = 7; for(const c of tk) h = (h*31 + c.charCodeAt(0)) >>> 0;
   const m = h % 4, acc = (h >> 2) % 4;
@@ -629,277 +577,153 @@ function pfp(tk, col){
   </svg>`;
 }
 
-let tokens = [
-  {t:"$SNIBB", c:"#8b7cf7", w:38},
-  {t:"$ZOINK", c:"#6ee7a0", w:24},
-  {t:"$GLORP", c:"#f7b955", w:17},
-  {t:"$CRUMB", c:"#f472b6", w:12},
-  {t:"$WAGYU", c:"#60a5fa", w: 9},
-];
-const bench = [
-  {t:"$MOP",  c:"#22d3ee"},
-  {t:"$DRIP", c:"#c084fc"},
-  {t:"$HONK", c:"#fbbf24"},
-  {t:"$YEET", c:"#34d399"},
-];
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $id = id => document.getElementById(id);
+function hues(str){let h=7;for(const c of str||"x")h=(h*31+c.charCodeAt(0))>>>0;const h1=h%360,h2=(h1+70)%360;return [`hsl(${h1} 70% 60%)`,`hsl(${h2} 75% 62%)`];}
+const agoTxt = t => {const s=(Date.now()-t)/1000;return s<90?Math.round(s)+"s":s<5400?Math.round(s/60)+"m":s<172800?Math.round(s/3600)+"h":Math.round(s/86400)+"d";};
 
-const holdingsEl = document.getElementById("holdings");
-function renderHoldings(flashSet){
-  holdingsEl.innerHTML = tokens.map(h=>`
-    <div class="holding ${flashSet && flashSet.has(h.t) ? "flash":""}" style="--pc:${h.c}">
-      <span class="pf">${pfp(h.t, h.c)}</span>
-      <span class="t">${h.t}</span>
-      <span class="w num">${h.w}%</span>
-    </div>`).join("");
+/* ================= real launches drive everything ================= */
+let launches = [];
+fetch("/api/launches").then(r=>r.ok?r.json():[]).then(l=>{launches=Array.isArray(l)?l:[];})
+  .catch(()=>{})
+  .finally(()=>{renderDeck();initBubbles();updateIndexStatus();});
+
+function launchCard(t, hidden){
+  const [c1,c2]=hues(t.symbol);
+  const av = t.image?`<img src="${t.image}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`:pfp("$"+t.symbol,c1);
+  const dev = Number(t.devBuyPct||0);
+  return `
+  <article class="card" ${hidden?'aria-hidden="true"':''}>
+    <div class="banner" style="background:radial-gradient(150px 110px at 78% 22%, ${c2}, transparent 70%),linear-gradient(120deg, ${c1}, ${c2})">
+      <span class="mark" aria-hidden="true">${t.name}</span>
+      <span class="avatar" style="background:linear-gradient(140deg,#fff,${c2})">${av}</span>
+      <span class="socials"><a href="/t/${t.symbol}" style="color:inherit">${icoLink}</a>${t.twitter?`<a href="${t.twitter}" rel="noopener" style="color:inherit">${icoX}</a>`:""}</span>
+    </div>
+    <div class="card-body">
+      <div class="id-row">
+        <div class="who">
+          <span class="name">${t.name}</span>
+          <span class="chain">${icoSol} Solana</span>
+        </div>
+        <span class="when">sealed · ${agoTxt(t.launchedAt||Date.now())} ago</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="lbl">Entry MCAP</span><span class="val num">$20k</span></div>
+        <div class="stat"><span class="lbl">Dev buy</span><span class="val num">${dev.toFixed(1)}%</span></div>
+        <div class="stat"><span class="lbl">Status</span><span class="val">On the curve</span></div>
+      </div>
+      <a class="btn see" href="token?mint=${t.mint}" style="text-align:center">See token</a>
+    </div>
+  </article>`;
 }
-renderHoldings();
-
-const cv = document.getElementById("ring");
-const ctx = cv.getContext("2d");
-const ringWrap = cv.parentElement;
-let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2);
-function size(){
-  const r = cv.parentElement.getBoundingClientRect();
-  W = r.width; H = r.height;
-  cv.width = W*DPR; cv.height = H*DPR;
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-size(); addEventListener("resize", size);
-
-/* pfp orbs riding the ring */
-const orbs = tokens.map(()=> {
-  const o = document.createElement("div");
-  o.className = "orb";
-  o._size = 0;
-  ringWrap.appendChild(o);
-  return o;
-});
-const tip = document.createElement("div");
-tip.className = "ring-tip";
-ringWrap.appendChild(tip);
-
-let cur = tokens.map(t=>t.w/100);
-let tgt = cur.slice();
-let spin = -Math.PI/2;
-let pulse = 0;
-let hover = -1;
-const GAP = 0.07;
-const TAU = Math.PI*2;
-
-function geometry(){
-  return {cx:W/2, cy:H/2, R:Math.min(W,H)/2 - 34, LW:Math.max(13, (Math.min(W,H)/2-34)*0.15)};
-}
-function segs(){
-  const total = cur.reduce((a,b)=>a+b,0);
-  let a = spin;
-  return cur.map(c=>{
-    const frac = c/total;
-    const sg = {a0:a + GAP/2, a1:a + frac*TAU - GAP/2, mid:a + frac*Math.PI, frac};
-    a += frac*TAU;
-    return sg;
-  });
-}
-
-function draw(){
-  ctx.clearRect(0,0,W,H);
-  const {cx,cy,R,LW} = geometry();
-  /* track */
-  ctx.beginPath();
-  ctx.lineWidth = LW;
-  ctx.strokeStyle = "rgba(255,255,255,.045)";
-  ctx.arc(cx,cy,R,0,TAU);
-  ctx.stroke();
-  const list = segs();
-  ctx.lineCap = "round";
-  for(let i=0;i<list.length;i++){
-    const sg = list[i];
-    if(sg.a1 - sg.a0 < 0.02) continue;
-    const hl = i === hover;
-    /* soft halo pass */
-    ctx.beginPath();
-    ctx.lineWidth = LW + (hl ? 12 : 7) + pulse*4;
-    ctx.strokeStyle = tokens[i].c + (hl ? "4d" : "26");
-    ctx.arc(cx,cy,R,sg.a0,sg.a1);
-    ctx.stroke();
-    /* crisp core */
-    ctx.beginPath();
-    ctx.lineWidth = hl ? LW + 2.5 : LW;
-    ctx.strokeStyle = tokens[i].c;
-    ctx.arc(cx,cy,R,sg.a0,sg.a1);
-    ctx.stroke();
+function renderDeck(){
+  const track = $id("track");
+  if(!launches.length){
+    track.classList.add("static");
+    track.innerHTML = `<div class="empty-launch">
+      <b>No launches yet — block zero is open</b>
+      <span>The first token launched on index appears here, sealed and bundle-proof.</span>
+      <a class="cta-halo sm" href="create"><span class="btn-inner">+ Launch the first token</span></a>
+    </div>`;
+    return;
   }
-}
-
-function placeOrbs(dt){
-  const {cx,cy,R} = geometry();
-  const list = segs();
-  for(let i=0;i<orbs.length;i++){
-    const o = orbs[i], sg = list[i];
-    const target = Math.round(Math.max(26, Math.min(46, 20 + sg.frac*95)));
-    o._size += (target - o._size) * (dt ? 1-Math.exp(-8*dt) : 1);
-    const szn = o._size;
-    o.style.width = o.style.height = szn.toFixed(1) + "px";
-    const x = cx + Math.cos(sg.mid)*R, y = cy + Math.sin(sg.mid)*R;
-    const scale = i === hover ? 1.15 : 1;
-    o.style.left = x + "px";
-    o.style.top  = y + "px";
-    o.style.transform = `translate(-50%,-50%) scale(${scale})`;
-    if(o.dataset.t !== tokens[i].t){
-      o.dataset.t = tokens[i].t;
-      o.innerHTML = pfp(tokens[i].t, tokens[i].c);
-      o.style.boxShadow = `0 0 10px ${tokens[i].c}55, 0 3px 10px rgba(0,0,0,.4)`;
-    }
-  }
-}
-
-/* hover: segment detection + tooltip */
-function onMove(e){
-  const r = cv.getBoundingClientRect();
-  const x = e.clientX - r.left, y = e.clientY - r.top;
-  const {cx,cy,R,LW} = geometry();
-  const dx = x-cx, dy = y-cy;
-  const dist = Math.hypot(dx,dy);
-  let h = -1;
-  if(Math.abs(dist - R) < LW*2){
-    let ang = Math.atan2(dy,dx);
-    let rel = ((ang - spin) % TAU + TAU) % TAU;
-    let acc = 0;
-    const total = cur.reduce((a,b)=>a+b,0);
-    for(let i=0;i<cur.length;i++){
-      acc += cur[i]/total*TAU;
-      if(rel < acc){ h = i; break; }
-    }
-  }
-  hover = h;
-  if(h >= 0){
-    tip.innerHTML = `<b>${tokens[h].t}</b><span class="pc num">${tokens[h].w}%</span>`;
-    tip.style.left = Math.min(x + 14, W - 90) + "px";
-    tip.style.top  = (y - 34) + "px";
-    tip.classList.add("show");
-    cv.style.cursor = "pointer";
+  const cards = launches.map(t=>launchCard(t,false)).join("");
+  if(launches.length >= 4 && !reduceMotion){
+    track.classList.remove("static");
+    track.innerHTML = cards + launches.map(t=>launchCard(t,true)).join("");
   }else{
-    tip.classList.remove("show");
-    cv.style.cursor = "";
+    track.classList.add("static");
+    track.innerHTML = cards;
   }
 }
-cv.style.pointerEvents = "auto";
-cv.addEventListener("mousemove", onMove);
-cv.addEventListener("mouseleave", ()=>{ hover=-1; tip.classList.remove("show"); cv.style.cursor=""; });
 
-let last = performance.now();
-function frame(now){
-  const dt = Math.min(0.05, (now - last)/1000); last = now;
-  const k = 1 - Math.exp(-5*dt);
-  for(let i=0;i<cur.length;i++){
-    const d = tgt[i]-cur[i];
-    cur[i] = Math.abs(d) > 0.0002 ? cur[i] + d*k : tgt[i];
+/* ================= hero bubbles — real mints only ================= */
+function initBubbles(){
+  if(reduceMotion || !launches.length) return;
+  const host = $id("bubbles");
+  const SLOTS = [[1,3,14],[1,8,42],[1,2,68],[1,10,86],[0,3,18],[0,9,46],[0,2,72],[0,11,88]];
+  let order = [...SLOTS].sort(()=>Math.random()-.5), si = 0;
+  function spawn(){
+    if(document.hidden) return;
+    const t = launches[Math.floor(Math.random()*launches.length)];
+    const [c1] = hues(t.symbol);
+    const el = document.createElement("div");
+    el.className = "bubble mint";
+    el.innerHTML = `<span class="bpf">${t.image?`<img src="${t.image}" alt="" style="width:100%;height:100%;object-fit:cover">`:pfp("$"+t.symbol,c1)}</span><span><span class="tag">Sealed launch</span> · <b>$${t.symbol}</b></span>`;
+    const [left,x,y] = order[si = (si+1) % order.length];
+    if(si === 0) order.sort(()=>Math.random()-.5);
+    el.style[left?"left":"right"] = x + "%";
+    el.style.top = y + "%";
+    host.appendChild(el);
+    setTimeout(()=>el.remove(), 5200);
   }
-  spin += dt*0.055;
-  pulse = Math.max(0, pulse - dt*1.4);
-  draw(); placeOrbs(dt);
-  requestAnimationFrame(frame);
+  setTimeout(spawn, 1600);
+  setInterval(spawn, 2600);
 }
 
-const flag = document.getElementById("rebalance-flag");
-function rebalance(){
-  let ws = tokens.map(t=>t.w + (Math.random()*10-5));
-  if(Math.random() < 0.45){
-    const inT = bench[Math.floor(Math.random()*bench.length)];
-    if(!tokens.some(t=>t.t===inT.t)){
-      tokens[tokens.length-1] = {t:inT.t, c:inT.c, w:ws[ws.length-1]};
-    }
+/* ================= the Index — real graduation progress ================= */
+const NEED = 5;
+const cv = $id("ring"), ctx = cv.getContext("2d");
+let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2);
+function size(){const r=cv.parentElement.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+size(); addEventListener("resize", ()=>{size(); updateIndexStatus();});
+function drawRing(p){
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2, R=Math.min(W,H)/2-26, LW=Math.max(12,R*0.13);
+  ctx.lineCap = "round";
+  ctx.beginPath(); ctx.lineWidth = LW; ctx.strokeStyle = "rgba(255,255,255,.05)";
+  ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+  for(let i=0;i<NEED;i++){
+    const a = -Math.PI/2 + i/NEED*Math.PI*2;
+    ctx.beginPath(); ctx.fillStyle = "rgba(255,255,255,.18)";
+    ctx.arc(cx+Math.cos(a)*R, cy+Math.sin(a)*R, 2.4, 0, 7); ctx.fill();
   }
-  ws = ws.map(w=>Math.max(5,w));
-  const sum = ws.reduce((a,b)=>a+b,0);
-  ws = ws.map(w=>w/sum*100);
-  tokens.forEach((t,i)=>t.w = ws[i]);
-  tokens.sort((a,b)=>b.w-a.w);
-  tokens.forEach((t,i)=>t.w = Math.round(t.w));
-  const diff = 100 - tokens.reduce((a,b)=>a+b.w,0);
-  tokens[0].w += diff;
-
-  tgt = tokens.map(t=>t.w/100);
-  pulse = 1;
-  renderHoldings(new Set(tokens.map(t=>t.t)));
-  flag.classList.add("show");
-  setTimeout(()=>flag.classList.remove("show"), 1600);
-  setTimeout(()=>renderHoldings(), 2000);
+  if(p > 0){
+    const g = ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,"#8b7cf7"); g.addColorStop(1,"#6ee7a0");
+    ctx.beginPath(); ctx.lineWidth = LW; ctx.strokeStyle = g;
+    ctx.shadowColor = "#8b7cf7"; ctx.shadowBlur = 12;
+    ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+p*Math.PI*2); ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
 }
-
-draw(); placeOrbs(0);
-if(!reduceMotion){
-  requestAnimationFrame(frame);
-  setInterval(rebalance, 8000);
+function updateIndexStatus(){
+  const grads = launches.filter(l=>l.graduated).length;
+  $id("grad-count").textContent = grads + " / " + NEED;
+  $id("is-grad").textContent = grads + " / " + NEED;
+  drawRing(grads/NEED);
 }
+drawRing(0);
 
-/* ================= ambient particles in the frame ================= */
+/* rotation countdown (the schedule is policy, not placeholder) */
+function nextMonday(){const n=new Date();const d=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()));const add=((8-d.getUTCDay())%7)||7;d.setUTCDate(d.getUTCDate()+add);return d;}
+function tickRot(){let ms=nextMonday()-Date.now();const d=Math.floor(ms/86400000);ms-=d*86400000;const h=Math.floor(ms/3600000);ms-=h*3600000;const m=Math.floor(ms/60000);$id("rot-in").textContent=`${d}d ${h}h ${m}m`;}
+tickRot(); setInterval(tickRot, 30000);
+
+/* ================= ambient particles ================= */
 (function(){
   if(reduceMotion) return;
   const host = document.querySelector(".frame-bg");
   const c = document.createElement("canvas");
   host.appendChild(c);
   const x = c.getContext("2d");
-  let W=0,H=0;
-  function sz(){const r=host.getBoundingClientRect();W=c.width=r.width;H=c.height=r.height;}
+  let Wp=0,Hp=0;
+  function sz(){const r=host.getBoundingClientRect();Wp=c.width=r.width;Hp=c.height=r.height;}
   sz(); addEventListener("resize",sz);
-  const P = Array.from({length:44},()=>({
-    x:Math.random(), y:Math.random(),
-    s:Math.random()*1.5+.5,
-    v:Math.random()*.00022+.00008,
-    tw:Math.random()*Math.PI*2
-  }));
+  const Pt = Array.from({length:44},()=>({x:Math.random(),y:Math.random(),s:Math.random()*1.5+.5,v:Math.random()*.00022+.00008,tw:Math.random()*Math.PI*2}));
   (function f(t){
-    x.clearRect(0,0,W,H);
-    for(const p of P){
+    x.clearRect(0,0,Wp,Hp);
+    for(const p of Pt){
       p.y -= p.v;
       if(p.y < -.02){ p.y = 1.02; p.x = Math.random(); }
-      const twinkle = .2 + .3*Math.sin(t*.0012 + p.tw);
-      x.globalAlpha = Math.max(0, twinkle * (1 - p.y*.8));
+      const twk = .2 + .3*Math.sin(t*.0012 + p.tw);
+      x.globalAlpha = Math.max(0, twk * (1 - p.y*.8));
       x.fillStyle = "#bdaffb";
-      x.beginPath(); x.arc(p.x*W, p.y*H, p.s, 0, 7); x.fill();
+      x.beginPath(); x.arc(p.x*Wp, p.y*Hp, p.s, 0, 7); x.fill();
     }
     x.globalAlpha = 1;
     requestAnimationFrame(f);
   })(0);
-})();
-
-/* ================= hero activity bubbles ================= */
-(function(){
-  if(reduceMotion) return;
-  const host = document.getElementById("bubbles");
-  let TICKS = [
-    ["SNIBB","#8b7cf7"],["ZOINK","#6ee7a0"],["GLORP","#f7b955"],["CRUMB","#f472b6"],
-    ["WAGYU","#60a5fa"],["MOP","#22d3ee"],["DRIP","#c084fc"],["HONK","#fbbf24"],
-  ];
-  fetch("/api/launches").then(r=>r.ok?r.json():[]).then(list=>{
-    (list||[]).slice(0,6).forEach(t=>TICKS.unshift([t.symbol,"#8b7cf7"]));
-  }).catch(()=>{});
-
-  /* side slots: [leftSide, x%, y%] — cycled shuffled so bubbles don't stack */
-  const SLOTS = [
-    [1, 3, 14],[1, 8, 42],[1, 2, 68],[1, 10, 86],
-    [0, 3, 18],[0, 9, 46],[0, 2, 72],[0, 11, 88],
-  ];
-  let order = [...SLOTS].sort(()=>Math.random()-.5), si = 0;
-
-  function spawn(){
-    if(document.hidden) return;
-    const [tick, col] = TICKS[Math.floor(Math.random()*TICKS.length)];
-    const isMint = Math.random() < 0.3;
-    const el = document.createElement("div");
-    el.className = "bubble " + (isMint ? "mint" : "buy");
-    el.innerHTML = isMint
-      ? `<span class="bpf">${pfp("$"+tick, col)}</span><span><span class="tag">New mint</span> · <b>$${tick}</b></span>`
-      : `<span class="bpf">${pfp("$"+tick, col)}</span><span><span class="amt">+${(Math.random()*1.4+0.05).toFixed(2)} SOL</span> buy · <b>$${tick}</b></span>`;
-    const [left, x, y] = order[si = (si+1) % order.length];
-    if(si === 0) order.sort(()=>Math.random()-.5);
-    el.style[left ? "left" : "right"] = x + "%";
-    el.style.top = y + "%";
-    host.appendChild(el);
-    setTimeout(()=>el.remove(), 5200);
-  }
-  setTimeout(spawn, 1600);
-  setInterval(spawn, 2100);
 })();
 
 /* ================= scroll reveals ================= */
@@ -921,61 +745,8 @@ if(!reduceMotion){
   items.forEach(el=>io.observe(el));
 }
 
-/* ================= drop calculator (example economics) ================= */
-(function(){
-  const range = document.getElementById("calc-range");
-  const amt = document.getElementById("calc-amt");
-  const share = document.getElementById("calc-share");
-  const drop = document.getElementById("calc-drop");
-  const POT = 172;            /* SOL to holders last week (example) */
-  const SUPPLY = 100_000_000; /* circulating $INDEX (example) */
-  function upd(){
-    const v = +range.value;
-    amt.textContent = v.toLocaleString();
-    const s = v/SUPPLY;
-    share.textContent = (s*100).toFixed(2) + "%";
-    const d = s*POT;
-    drop.textContent = (d >= 10 ? d.toFixed(1) : d.toFixed(2)) + " SOL";
-  }
-  range.addEventListener("input", upd);
-  upd();
-})();
-
-/* ================= rotation history ================= */
-(function(){
-  const host = document.getElementById("history");
-  const weeks = [
-    {d:"27 Oct", t:[["$SNIBB","#8b7cf7",0],["$ZOINK","#6ee7a0",0],["$GLORP","#f7b955",1],["$CRUMB","#f472b6",0],["$WAGYU","#60a5fa",0]]},
-    {d:"20 Oct", t:[["$SNIBB","#8b7cf7",0],["$ZOINK","#6ee7a0",1],["$CRUMB","#f472b6",0],["$WAGYU","#60a5fa",0],["$MOP","#22d3ee",0]]},
-    {d:"13 Oct", t:[["$SNIBB","#8b7cf7",1],["$CRUMB","#f472b6",1],["$WAGYU","#60a5fa",0],["$MOP","#22d3ee",0],["$DRIP","#c084fc",0]]},
-  ];
-  host.insertAdjacentHTML("beforeend", weeks.map(w=>`
-    <div class="hrow">
-      <span class="hd">${w.d}</span>
-      ${w.t.map(([tk,c,isNew])=>`<span class="hchip ${isNew?"in":""}"><span class="hpf">${pfp(tk,c)}</span>${tk}</span>`).join("")}
-    </div>`).join(""));
-})();
-
-/* ---------- countdown to Monday 00:00 UTC ---------- */
-const cdEl = document.getElementById("countdown");
-function nextMonday(){
-  const n = new Date();
-  const d = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()));
-  const add = ((8 - d.getUTCDay()) % 7) || 7;
-  d.setUTCDate(d.getUTCDate() + add);
-  return d;
-}
-function tick(){
-  let ms = nextMonday() - Date.now();
-  const d = Math.floor(ms/86400000); ms -= d*86400000;
-  const h = Math.floor(ms/3600000);  ms -= h*3600000;
-  const m = Math.floor(ms/60000);
-  cdEl.textContent = `${d}d ${h}h ${m}m`;
-}
-tick(); setInterval(tick, 30000);
-
-/* ---------- toast for pre-launch actions ---------- */
-const toast = document.getElementById("toast");
+/* ================= toast ================= */
+const toast = $id("toast");
 let toastTimer;
 function say(msg){
   toast.textContent = msg;
@@ -983,8 +754,7 @@ function say(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
-document.getElementById("connect").addEventListener("click", ()=>say("Wallet connect goes live with the devnet release."));
-document.addEventListener("click", e=>{ if(e.target.closest(".see")) location.href = "token"; });
+$id("connect").addEventListener("click", ()=>say("Connect your wallet on the launch page — one click from “+ Launch”."));
 </script>
 </body>
 </html>

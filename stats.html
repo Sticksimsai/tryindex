@@ -381,7 +381,7 @@ footer .fine{margin-top:12px;max-width:62em}
           <div class="dcard span5">
             <div class="dhead"><span class="dtitle">Given away to $INDEX holders</span><span class="dlive"><i></i>Live</span></div>
             <div class="bignum num" id="given">0<span class="unit">SOL</span></div>
-            <p class="dsub">Across <b style="color:#fff" class="num">12,408</b> wallets since launch · next drop at Monday's rotation</p>
+            <p class="dsub">Accrues from post-graduation fees — every drop to holders lands here</p>
             <svg class="spark" viewBox="0 0 320 64" preserveAspectRatio="none" aria-label="Rewards paid over the last seven days, rising through the week">
               <defs>
                 <linearGradient id="sparkGrad" x1="0" y1="0" x2="1" y2="0">
@@ -391,19 +391,18 @@ footer .fine{margin-top:12px;max-width:62em}
                   <stop offset="0" stop-color="rgba(139,124,247,.35)"/><stop offset="1" stop-color="rgba(139,124,247,0)"/>
                 </linearGradient>
               </defs>
-              <polygon class="area" points="4,52 50,48 96,50 142,38 188,34 234,22 280,18 312,10 312,62 4,62"/>
-              <polyline points="4,52 50,48 96,50 142,38 188,34 234,22 280,18 312,10"/>
-              <circle class="dot" cx="312" cy="10" r="3"/>
+              <line x1="4" y1="52" x2="312" y2="52" stroke="url(#sparkGrad)" stroke-width="2" opacity=".4"/>
+              <text x="158" y="30" text-anchor="middle" style="fill:#9b97ad;font-size:11px;font-family:Poppins,sans-serif">No rewards paid yet — the first rotation is pending</text>
             </svg>
             <div class="kpis">
-              <div class="kpi"><span class="kl">Paid 24h</span><span class="kv num">41 SOL</span></div>
-              <div class="kpi"><span class="kl">Paid 7d</span><span class="kv num">286 SOL</span></div>
-              <div class="kpi"><span class="kl">Earning now</span><span class="kv g num">12,408</span></div>
+              <div class="kpi"><span class="kl">Paid 24h</span><span class="kv num">0 SOL</span></div>
+              <div class="kpi"><span class="kl">Paid 7d</span><span class="kv num">0 SOL</span></div>
+              <div class="kpi"><span class="kl">Earning now</span><span class="kv g num">0</span></div>
             </div>
           </div>
 
           <div class="dcard span4">
-            <div class="dhead"><span class="dtitle">Where fees go · 7d</span></div>
+            <div class="dhead"><span class="dtitle">Where fees go · protocol split</span></div>
             <div class="split">
               <div class="splitring" aria-hidden="true"></div>
               <div class="splitrows">
@@ -422,7 +421,7 @@ footer .fine{margin-top:12px;max-width:62em}
               </div>
             </div>
             <div class="kpis">
-              <div class="kpi"><span class="kl">Revenue 7d</span><span class="kv num">477 SOL</span></div>
+              <div class="kpi"><span class="kl">Revenue 7d</span><span class="kv num">0 SOL</span></div>
               <div class="kpi"><span class="kl">To holders</span><span class="kv l num">60%</span></div>
             </div>
           </div>
@@ -448,14 +447,14 @@ footer .fine{margin-top:12px;max-width:62em}
             <div class="dhead"><span class="dtitle">This week's Index</span></div>
             <div class="lb" id="index-lb"></div>
             <div class="kpis">
-              <div class="kpi"><span class="kl">Launched</span><span class="kv num">214</span></div>
-              <div class="kpi"><span class="kl">Graduated</span><span class="kv num">37</span></div>
-              <div class="kpi"><span class="kl">Grad rate</span><span class="kv g num">17%</span></div>
-              <div class="kpi"><span class="kl">Buybacks 7d</span><span class="kv num">119 SOL</span></div>
+              <div class="kpi"><span class="kl">Launched</span><span class="kv num" id="st-launched">0</span></div>
+              <div class="kpi"><span class="kl">Graduated</span><span class="kv num" id="st-grad">0</span></div>
+              <div class="kpi"><span class="kl">Grad rate</span><span class="kv g num" id="st-rate">—</span></div>
+              <div class="kpi"><span class="kl">Buybacks 7d</span><span class="kv num">0 SOL</span></div>
             </div>
           </div>
 
-          <p class="dnote">Preview shows example figures — live stats connect at launch.</p>
+          <p class="dnote">Live protocol figures — they update as launches, trades and graduations happen.</p>
         </div>
 
       </section>
@@ -496,7 +495,7 @@ footer .fine{margin-top:12px;max-width:62em}
           <a href="https://x.com/launchonindex" rel="noopener">X / Twitter</a>
           </div>
         </div>
-        <p class="fine">launchonindex.fun — built on Raydium LaunchLab. Preview shows example figures; live stats connect at launch.</p>
+        <p class="fine">launchonindex.fun — built on Raydium LaunchLab. Memecoins are volatile and can go to zero; nothing here is financial advice.</p>
       </footer>
 
     </div>
@@ -511,7 +510,7 @@ const PALETTE = ["#8b7cf7","#6ee7a0","#f7b955","#f472b6","#60a5fa"];
 /* ================= stats dashboard (example data; wire to API at launch) ================= */
 /* counter: total given away counts up on first view */
 const givenEl = document.getElementById("given");
-const GIVEN_TOTAL = 3912;
+const GIVEN_TOTAL = 0;
 if(reduceMotion){
   givenEl.innerHTML = GIVEN_TOTAL.toLocaleString() + '<span class="unit">SOL</span>';
 }else{
@@ -538,85 +537,21 @@ new IntersectionObserver((es,obs)=>{
   }
 },{threshold:.4}).observe(document.querySelector(".split"));
 
-/* live rewards feed */
-const feedEl = document.getElementById("feed");
-const FEED_TOKENS = [["$SNIBB","#8b7cf7"],["$ZOINK","#6ee7a0"],["$GLORP","#f7b955"],["$CRUMB","#f472b6"],["$WAGYU","#60a5fa"]];
-function wallet(){
-  const c = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789";
-  const r = n => Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join("");
-  return r(4)+"…"+r(4);
-}
-let feedRows = [];
-function feedRow(fresh){
-  const [tk,col] = FEED_TOKENS[Math.floor(Math.random()*FEED_TOKENS.length)];
-  const amt = (Math.random()*1.6+0.05).toFixed(2);
-  return `<div class="feedrow ${fresh ? "new":""}">
-    <span class="sw" style="background:${col}"></span>
-    <span class="fw">${wallet()}</span>
-    <span class="fa num">+${amt} ${tk}</span>
-  </div>`;
-}
-for(let i=0;i<6;i++) feedRows.push(feedRow(false));
-feedEl.innerHTML = feedRows.join("");
-if(!reduceMotion){
-  setInterval(()=>{
-    feedRows.unshift(feedRow(true));
-    feedRows = feedRows.slice(0,6);
-    feedEl.innerHTML = feedRows.join("");
-  }, 2800);
-}
+/* live rewards feed — fills from the first payout */
+document.getElementById("feed").innerHTML =
+  '<p class="dsub" style="padding-block:34px;text-align:center">Waiting for the first payout.<br>Every reward to $INDEX holders appears here live.</p>';
 
-/* wallet leaderboard with period tabs */
-const LB_DATA = {
-  "24h":[["7vNp…kQ2d",41200],["Bm3x…9rTe",33750],["4yKe…mWu8",27900],["Jx8x…p4Vn",19480],["Jw2q…hT6s",12240]],
-  "7d":[["Bm3x…9rTe",228400],["7vNp…kQ2d",201300],["Jx8x…p4Vn",164800],["Da5f…cR9k",120500],["4yKe…mWu8",98100]],
-  "all":[["Da5f…cR9k",1904000],["Bm3x…9rTe",1677000],["7vNp…kQ2d",1365000],["Qn7h…wZ3m",981000],["Jx8x…p4Vn",874000]],
-};
-const LB_HUES = ["#cfc4ff","#a7f3c9","#fde1a8","#fbc5de","#bcd8ff"];
-const lbEl = document.getElementById("lb");
-function renderLB(period){
-  const rows = LB_DATA[period];
-  const max = rows[0][1];
-  lbEl.innerHTML = rows.map((r,i)=>`
-    <div class="lbrow">
-      <span class="rank num">${i+1}</span>
-      <span class="pfp" style="background:linear-gradient(140deg,#fff,${LB_HUES[i]})">${r[0][0]}</span>
-      <div class="mid">
-        <span class="w">${r[0]}</span>
-        <div class="lbar"><i data-w="${Math.round(r[1]/max*100)}"></i></div>
-      </div>
-      <span class="pts num">${r[1].toLocaleString()} pts</span>
-    </div>`).join("");
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    lbEl.querySelectorAll(".lbar i").forEach(b=>b.style.width=b.dataset.w+"%");
-  }));
-}
-renderLB("24h");
+/* wallet leaderboard — fills with the first curve trades */
+document.getElementById("lb").innerHTML =
+  '<p class="dsub" style="padding-block:30px;text-align:center">No points earned yet — points start with the first trades.</p>';
 document.querySelectorAll(".lbtab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".lbtab").forEach(x=>x.classList.remove("on"));
   t.classList.add("on");
-  renderLB(t.dataset.p);
 }));
 
-/* this week's index composition */
-const idxEl = document.getElementById("index-lb");
-const IDX = [["$SNIBB",38,"7d vol 1,204 SOL"],["$ZOINK",24,"7d vol 866 SOL"],["$GLORP",17,"7d vol 519 SOL"],["$CRUMB",12,"7d vol 371 SOL"],["$WAGYU",9,"7d vol 242 SOL"]];
-idxEl.innerHTML = IDX.map((r,i)=>`
-  <div class="lbrow">
-    <span class="rank num">${i+1}</span>
-    <span class="pfp" style="background:linear-gradient(140deg,#fff,${PALETTE[i]})">${r[0][1]}</span>
-    <div class="mid">
-      <span class="w" style="font-family:'Poppins',sans-serif;font-weight:600">${r[0]} <span style="color:#9b97ad;font-weight:400;font-size:.8rem">· ${r[2]}</span></span>
-      <div class="lbar"><i data-w="${Math.round(IDX[0][1] ? r[1]/IDX[0][1]*100 : 0)}" style="background:linear-gradient(90deg,${PALETTE[i]},${PALETTE[i]}aa)"></i></div>
-    </div>
-    <span class="pts num" style="color:#fff">${r[1]}%</span>
-  </div>`).join("");
-new IntersectionObserver((es,obs)=>{
-  if(es[0].isIntersecting){
-    idxEl.querySelectorAll(".lbar i").forEach(b=>b.style.width=b.dataset.w+"%");
-    obs.disconnect();
-  }
-},{threshold:.3}).observe(idxEl);
+/* index composition — forms from the first five graduations */
+document.getElementById("index-lb").innerHTML =
+  '<p class="dsub" style="padding-block:30px;text-align:center">No graduated tokens yet — the first five past $100k form the Index.</p>';
 
 
 /* toast */
@@ -628,7 +563,14 @@ function say(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
-document.getElementById("connect").addEventListener("click", ()=>say("Wallet connect goes live with the devnet release."));
+document.getElementById("connect").addEventListener("click", ()=>say("Connect your wallet on the launch page — one click from “+ Launch”."));
+fetch("/api/launches").then(r=>r.ok?r.json():[]).then(l=>{
+  const n = Array.isArray(l) ? l.length : 0;
+  const g = Array.isArray(l) ? l.filter(t=>t.graduated).length : 0;
+  document.getElementById("st-launched").textContent = n;
+  document.getElementById("st-grad").textContent = g;
+  if(n) document.getElementById("st-rate").textContent = Math.round(g/n*100) + "%";
+}).catch(()=>{});
 </script>
 </body>
 </html>

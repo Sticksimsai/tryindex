@@ -318,16 +318,7 @@ const now = Date.now();
 const M = 60_000, H = 3_600_000;
 
 /* example tokens — the live feed from /api/launches merges on top */
-let tokens = [
-  {name:"Snibb",    tick:"SNIBB", mcap:134200, vol:41200, holders:3105, created:now-5*H,  grad:true,  inIndex:true,  hue1:"#4ade80", hue2:"#60a5fa"},
-  {name:"Zoink",    tick:"ZOINK", mcap:112500, vol:28800, holders:2488, created:now-9*H,  grad:true,  inIndex:true,  hue1:"#34d399", hue2:"#6d5ae6"},
-  {name:"Glorp",    tick:"GLORP", mcap:86400,  vol:19400, holders:1240, created:now-38*M, grad:false, inIndex:true,  hue1:"#6d5ae6", hue2:"#f472b6"},
-  {name:"Wagyu",    tick:"WAGYU", mcap:61900,  vol:9100,  holders:872,  created:now-1*H,  grad:false, inIndex:true,  hue1:"#f7b955", hue2:"#ef4444"},
-  {name:"Crumb",    tick:"CRUMB", mcap:48750,  vol:7600,  holders:603,  created:now-2*H,  grad:false, inIndex:true,  hue1:"#f472b6", hue2:"#f7b955"},
-  {name:"Moon Mop", tick:"MOP",   mcap:27300,  vol:3900,  holders:214,  created:now-12*M, grad:false, inIndex:false, hue1:"#60a5fa", hue2:"#8b7cf7"},
-  {name:"Drip",     tick:"DRIP",  mcap:24100,  vol:2100,  holders:146,  created:now-25*M, grad:false, inIndex:false, hue1:"#c084fc", hue2:"#60a5fa"},
-  {name:"Honk",     tick:"HONK",  mcap:21050,  vol:850,   holders:61,   created:now-7*M,  grad:false, inIndex:false, hue1:"#fbbf24", hue2:"#f472b6"},
-];
+let tokens = [];
 
 /* merge real launches when the engine is up */
 fetch("/api/launches").then(r=>r.ok?r.json():[]).then(list=>{
@@ -335,7 +326,7 @@ fetch("/api/launches").then(r=>r.ok?r.json():[]).then(list=>{
   for(const t of list){
     tokens.unshift({
       name:t.name, tick:t.symbol, mint:t.mint, image:t.image||"",
-      mcap:20000, vol:0, holders:1,
+      mcap:20000, vol:null, holders:null,
       created:t.launchedAt||now, grad:false, inIndex:false, fresh:true,
       network:t.network, hue1:"#8b7cf7", hue2:"#60a5fa",
     });
@@ -377,9 +368,9 @@ function cardHTML(t){
         <span class="when">${ago(t.created)} ago</span>
       </div>
       <div class="stats">
-        <div class="stat"><span class="lbl">MCAP</span><span class="val num">${fmt(t.mcap)}</span></div>
+        <div class="stat"><span class="lbl">MCAP</span><span class="val num">${t.fresh ? "$20k entry" : fmt(t.mcap)}</span></div>
         <div class="stat"><span class="lbl">Vol 24h</span><span class="val num">${t.vol ? fmt(t.vol) : "—"}</span></div>
-        <div class="stat"><span class="lbl">Holders</span><span class="val num">${t.holders.toLocaleString()}</span></div>
+        <div class="stat"><span class="lbl">Holders</span><span class="val num">${t.holders ? t.holders.toLocaleString() : "—"}</span></div>
       </div>
       <div class="gradrow"><span>${t.grad ? "Trading on Raydium" : "Progress to $100k"}</span><b class="num">${t.grad ? "Graduated" : pct+"%"}</b></div>
       <div class="gradbar"><i style="width:${pct}%"></i></div>
@@ -399,7 +390,7 @@ function render(){
   });
   list.sort((a,b)=> sort==="mcap" ? b.mcap-a.mcap : sort==="vol" ? b.vol-a.vol : b.created-a.created);
   grid.innerHTML = list.length ? list.map(cardHTML).join("")
-    : `<div class="empty"><b>Nothing matches</b><span>Try a different filter — or launch the token you're looking for.</span><a class="cta-halo sm" href="create"><span class="btn-inner">+ Launch token</span></a></div>`;
+    : `<div class="empty"><b>Nothing matches</b><span>Nothing here yet — launch the first one.</span><a class="cta-halo sm" href="create"><span class="btn-inner">+ Launch token</span></a></div>`;
 }
 render();
 
@@ -421,7 +412,7 @@ function say(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
-document.getElementById("connect").addEventListener("click", ()=>say("Wallet connect goes live with the devnet release."));
+document.getElementById("connect").addEventListener("click", ()=>say("Connect your wallet on the launch page — one click from “+ Launch”."));
 
 
 </script>

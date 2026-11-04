@@ -118,7 +118,8 @@ async function ensurePlatform() {
     txVersion: TxVersion.V0,
     computeBudgetConfig: { units: 400_000, microLamports: 50_000 },
   });
-  const { txId } = await execute({ sendAndConfirm: true });
+  const res = await execute({ sendAndConfirm: true });
+  const txId = res?.txId || (Array.isArray(res?.txIds) ? res.txIds[0] : "");
   cachedPlatformId = derived;
   ensured = true;
   console.log(`platform: CREATED ${derived.toBase58()} (tx ${txId}) — 0% curve fee, LP split 25/25/50`);

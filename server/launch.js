@@ -84,7 +84,10 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
     txVersion: TxVersion.V0,
     computeBudgetConfig: { units: 600_000, microLamports: 100_000 },
   };
-  const pfid = platform.platformId();
+  let pfid = platform.platformId();
+  if (!pfid) {
+    try { pfid = await platform.ensurePlatform(); } catch {}
+  }
   if (pfid) params.platformId = pfid;
 
   const { transactions, extInfo } = await raydium.launchpad.createLaunchpad(params);

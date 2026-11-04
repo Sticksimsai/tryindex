@@ -133,5 +133,9 @@ app.use(express.static(path.join(__dirname, ".."), { extensions: ["html"] }));
 
 app.listen(CFG.PORT, () => {
   console.log(`index.fun engine up on :${CFG.PORT} — network=${CFG.NETWORK} rpc=${CFG.RPC_URL}`);
-  platform.ensurePlatform().catch((e) => console.error("platform setup failed:", e.message));
+  platform.ensurePlatform().catch((e) => {
+    console.error("platform setup failed:", e && (e.message || e));
+    if (e && e.logs) console.error("tx logs:\n" + e.logs.join("\n"));
+    if (e && e.stack) console.error(e.stack.split("\n").slice(0, 6).join("\n"));
+  });
 });

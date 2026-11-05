@@ -225,6 +225,12 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
 .claimb{width:100%;cursor:pointer;font:inherit;font-weight:600;font-size:.9rem;border-radius:12px;padding:.8em;background:rgba(122,99,232,.16);color:#bdaffb;border:1px solid rgba(189,175,251,.35);transition:background .2s}
 .claimb:hover{background:rgba(122,99,232,.28)}
 @media (max-width:1060px){.term{grid-template-columns:1fr}}
+
+/* copyable contract address */
+.ca-copy{cursor:pointer;color:var(--pill-b,#b9aaf5);border-bottom:1px dashed rgba(185,170,245,.45);user-select:none;transition:color .15s}
+.ca-copy:hover{color:#efeaff;border-bottom-color:#efeaff}
+.ca-copy .ca-ic{font-size:.85em;opacity:.8}
+.ca-copy.copied{color:#8fe3b4;border-bottom-color:#8fe3b4}
 .toast{
   position:fixed;left:50%;transform:translate(-50%,16px);opacity:0;pointer-events:none;
   bottom:calc(22px + env(safe-area-inset-bottom,0px));
@@ -357,13 +363,36 @@ fetch("/api/launches/" + mintParam).then(r=>r.ok?r.json():null).then(t=>{
     return;
   }
   document.getElementById("t-name").textContent = t.name;
-  const net = t.network === "mainnet" ? "" : "?cluster=" + t.network;
+  const shortCA = t.mint.slice(0,6) + "…" + t.mint.slice(-6);
   document.getElementById("t-links").innerHTML =
     "$" + t.symbol +
-    ' · <a href="https://solscan.io/token/' + t.mint + net + '" rel="noopener">' +
-    t.mint.slice(0,6) + "…" + t.mint.slice(-6) + "</a>" +
+    ' · <span class="ca-copy" id="ca-copy" role="button" tabindex="0" title="Copy contract address">' +
+    shortCA + ' <span class="ca-ic">⧉</span></span>' +
     ' · <a href="/t/' + t.symbol + '">launchonindex.fun/t/' + t.symbol + "</a>" +
     (t.twitter ? ' · <a href="' + t.twitter + '" rel="noopener">X</a>' : "");
+  const caBtn = document.getElementById("ca-copy");
+  const copyCA = () => {
+    const done = () => {
+      caBtn.classList.add("copied");
+      caBtn.innerHTML = shortCA + ' <span class="ca-ic">✓ copied</span>';
+      setTimeout(() => {
+        caBtn.classList.remove("copied");
+        caBtn.innerHTML = shortCA + ' <span class="ca-ic">⧉</span>';
+      }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t.mint).then(done).catch(() => fallback());
+    } else fallback();
+    function fallback(){
+      const ta = document.createElement("textarea");
+      ta.value = t.mint; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch(e) {}
+      ta.remove();
+    }
+  };
+  caBtn.addEventListener("click", copyCA);
+  caBtn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copyCA(); } });
   const [c1] = hues(t.symbol);
   document.getElementById("t-pf").innerHTML = t.image
     ? '<img src="' + t.image + '" alt="" style="width:100%;height:100%;object-fit:cover">'

@@ -337,6 +337,28 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .rule .rico svg{width:19px;height:19px}
 .rule:hover .rico{color:#fff;border-color:rgba(189,175,251,.55);background:rgba(122,99,232,.22);transform:rotate(-6deg) scale(1.08)}
 .rule h3{margin:0;font-weight:600;font-size:1.04rem}
+/* per-card identities */
+.rule .rico{color:var(--ac,#bdaffb);border-color:color-mix(in srgb,var(--ac,#bdaffb) 30%,transparent)}
+.rule::before{background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--ac,#bdaffb) 60%,transparent),transparent)}
+@media (prefers-reduced-motion:no-preference){
+  /* 01 — the lock clicks shut */
+  .r1 .rico .shk{animation:shkClick 4.2s ease-in-out infinite;transform-origin:12px 11px}
+  @keyframes shkClick{0%,58%,100%{transform:translateY(0)}66%{transform:translateY(-2.6px)}74%{transform:translateY(0)}78%{transform:translateY(-.6px)}82%{transform:translateY(0)}}
+  .r1 .rico{position:relative}
+  .r1 .rico::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:1px solid var(--ac);opacity:0;animation:lockPing 4.2s ease-out infinite}
+  @keyframes lockPing{0%,72%{opacity:0;transform:scale(1)}76%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
+  /* 02 — the percent seesaws against the cap */
+  .r2 .rico svg{animation:capSeesaw 3.8s ease-in-out infinite;transform-origin:center}
+  @keyframes capSeesaw{0%,100%{transform:rotate(0)}28%{transform:rotate(16deg)}44%{transform:rotate(-6deg)}58%{transform:rotate(10deg)}70%{transform:rotate(0)}}
+  /* 03 — the floor line draws itself upward, forever climbing */
+  .r3 .rico .tr{stroke-dasharray:30;animation:floorDraw 3.2s cubic-bezier(.2,.7,.2,1) infinite}
+  .r3 .rico .trh{animation:floorHead 3.2s ease infinite}
+  @keyframes floorDraw{0%{stroke-dashoffset:30}50%,88%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:.4}}
+  @keyframes floorHead{0%,34%{opacity:0}52%,88%{opacity:1}100%{opacity:.4}}
+  /* 04 — the bolt charges and discharges */
+  .r4 .rico svg{animation:zapCharge 3s ease-in-out infinite}
+  @keyframes zapCharge{0%,52%,100%{opacity:1;filter:none}58%{opacity:.35}62%{opacity:1;filter:drop-shadow(0 0 7px var(--ac))}68%{opacity:.5}72%{opacity:1;filter:drop-shadow(0 0 10px var(--ac))}86%{filter:none}}
+}
 .rule p{margin:0;color:var(--muted);font-size:.92rem}
 .rule a{color:#bdaffb;text-decoration:none;font-weight:500}
 .rule a:hover{text-decoration:underline}
@@ -422,7 +444,7 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 
 
 /* ---------- how it works: connected timeline, no boxes ---------- */
-.steps3{max-width:1280px;margin-inline:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,4.5vw,64px);position:relative}
+.steps3{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(18px,2.6vw,40px);position:relative}
 .step3{position:relative;display:grid;gap:10px;align-content:start;padding-top:72px;text-decoration:none;color:inherit;min-width:0}
 .step3 .node{
   position:absolute;top:0;left:0;width:50px;height:50px;border-radius:14px;z-index:1;
@@ -432,7 +454,7 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
   transition:transform .25s,box-shadow .25s,border-color .25s;
 }
 .step3::before{
-  content:"";position:absolute;top:25px;left:62px;right:calc(-1*clamp(24px,4.5vw,64px) + 10px);height:2px;
+  content:"";position:absolute;top:25px;left:62px;right:calc(-1*clamp(18px,2.6vw,40px) + 8px);height:2px;
   background:linear-gradient(90deg,rgba(189,175,251,.5),rgba(189,175,251,.06));
 }
 .step3:last-child::before{display:none}
@@ -440,12 +462,12 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
   position:absolute;top:-18px;right:-4px;font-family:var(--display);font-size:5rem;line-height:1;
   color:rgba(189,175,251,.07);pointer-events:none;user-select:none;
 }
-.step3 h3{margin:0;font-family:var(--display);font-weight:400;font-size:1.18rem;letter-spacing:.02em}
-.step3 p{margin:0;color:var(--muted);font-size:.93rem}
+.step3 h3{margin:0;font-family:var(--display);font-weight:400;font-size:1.02rem;letter-spacing:.02em}
+.step3 p{margin:0;color:var(--muted);font-size:.88rem}
 .step3 .go{color:#bdaffb;font-size:.88rem;font-weight:600;margin-top:2px}
 .step3:hover .node{transform:translateY(-4px);border-color:rgba(189,175,251,.85);box-shadow:0 0 28px rgba(139,124,247,.5)}
 .step3:hover .go{text-decoration:underline}
-@media (max-width:860px){
+@media (max-width:1100px){
   .steps3{grid-template-columns:1fr;gap:30px}
   .step3{padding-top:0;padding-left:70px}
   .step3::before{top:58px;left:24px;right:auto;bottom:-26px;width:2px;height:auto;
@@ -561,60 +583,30 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
           <p>Enforced by the program and the launch engine, not by promises. <a href="docs" style="color:#bdaffb;text-decoration:none">Read how a launch works →</a></p>
         </div>
         <div class="rules">
-          <div class="rule">
-            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+          <div class="rule r1" style="--ac:#bdaffb">
+            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path class="shk" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
             <span class="big">Block 0</span>
             <h3>Stealth contract</h3>
             <p>The mint is generated server-side and fired atomically. The contract address goes public to everyone at the same second — devs can't tip off bundlers with a CA that doesn't exist yet.</p>
           </div>
-          <div class="rule">
+          <div class="rule r2" style="--ac:#f0a6ce">
             <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
             <span class="big">3%</span>
             <h3>One dev buy, capped</h3>
             <p>A single dev buy rides inside the launch transaction, capped at 3% of supply. After that, the dev queues up with everyone else.</p>
           </div>
-          <div class="rule">
-            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>
+          <div class="rule r3" style="--ac:#8fe3b4">
+            <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tr" d="M3 17l6-6 4 4 8-8"/><path class="trh" d="M14 7h7v7"/></svg></span>
             <span class="big">$20k</span>
             <h3>Entry floor</h3>
             <p>Every token opens at a $20k market cap. No sub-$5k sniper ramp, no 25× head start for bots — the first buyer and the hundredth get comparable entries.</p>
           </div>
-          <div class="rule">
+          <div class="rule r4" style="--ac:#f5cf8f">
             <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
             <span class="big">0%</span>
             <h3>Free until it works</h3>
             <p>Launching costs nothing and we take 0% on the curve. Our fee only switches on once a token graduates past $100k — we earn when you do.</p>
           </div>
-        </div>
-      </section>
-
-      <section id="how">
-        <div class="sec-head">
-          <h2>How it works</h2>
-          <p>Three steps from an idea to a trading token — the dangerous parts automated away.</p>
-        </div>
-        <div class="steps3">
-          <a class="step3" href="docs">
-            <span class="node num">01</span>
-            <span class="ghost num" aria-hidden="true">01</span>
-            <h3>Launch sealed</h3>
-            <p>Name, ticker, image, and an optional dev buy up to 3%. The contract is generated inside the engine — nobody sees the CA before block 0, not even you.</p>
-            <span class="go">How sealing works →</span>
-          </a>
-          <a class="step3" href="docs">
-            <span class="node num">02</span>
-            <span class="ghost num" aria-hidden="true">02</span>
-            <h3>Trade the curve</h3>
-            <p>Everyone enters at the same $20k floor. Buys walk the price up, sells walk it down, and index takes 0% the whole way to $100k.</p>
-            <span class="go">The curve math →</span>
-          </a>
-          <a class="step3" href="docs">
-            <span class="node num">03</span>
-            <span class="ghost num" aria-hidden="true">03</span>
-            <h3>Graduate &amp; earn</h3>
-            <p>At $100k liquidity moves to Raydium and locks forever. A 1% pool fee switches on, creators earn 0.25% of every trade, and winners join the Index.</p>
-            <span class="go">Fees &amp; the Index →</span>
-          </a>
         </div>
       </section>
 
@@ -655,6 +647,50 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
             </div>
             <div><a class="cta-halo" href="create"><span class="btn-inner">+ Launch yours</span></a></div>
           </div>
+        </div>
+      </section>
+
+      <section id="how">
+        <div class="sec-head">
+          <h2>How it works</h2>
+          <p>From sealed mint to the weekly Index — the full journey, and where every fee goes.</p>
+        </div>
+        <div class="steps3">
+          <a class="step3" href="docs">
+            <span class="node num">01</span>
+            <span class="ghost num" aria-hidden="true">01</span>
+            <h3>Launch sealed</h3>
+            <p>Name, ticker, image, dev buy up to 3%. The contract is generated inside the engine — nobody holds the CA before block 0, not even you.</p>
+            <span class="go">How sealing works →</span>
+          </a>
+          <a class="step3" href="docs">
+            <span class="node num">02</span>
+            <span class="ghost num" aria-hidden="true">02</span>
+            <h3>Trade the curve</h3>
+            <p>Everyone enters at the same $20k floor. Buys walk the price up, sells walk it down — and index takes <b style="color:#fff">0%</b> the whole way.</p>
+            <span class="go">The curve math →</span>
+          </a>
+          <a class="step3" href="docs">
+            <span class="node num">03</span>
+            <span class="ghost num" aria-hidden="true">03</span>
+            <h3>Graduate at $100k</h3>
+            <p>Liquidity migrates to a Raydium pool and locks forever — it can never be pulled. The token now trades like any major coin.</p>
+            <span class="go">Graduation →</span>
+          </a>
+          <a class="step3" href="docs">
+            <span class="node num">04</span>
+            <span class="ghost num" aria-hidden="true">04</span>
+            <h3>Fees switch on</h3>
+            <p>Only now: a <b style="color:#fff">1% pool fee</b> funds the Index and the platform, and the creator earns <b style="color:#fff">0.25% of every trade</b> — forever.</p>
+            <span class="go">Full fee structure →</span>
+          </a>
+          <a class="step3" href="#basket">
+            <span class="node num">05</span>
+            <span class="ghost num" aria-hidden="true">05</span>
+            <h3>Join the Index</h3>
+            <p>The top five graduated tokens by volume form the Index. Hold $INDEX and the basket is distributed to you weekly — rebalanced every Monday.</p>
+            <span class="go">How the Index works →</span>
+          </a>
         </div>
       </section>
 

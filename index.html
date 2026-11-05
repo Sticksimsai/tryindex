@@ -420,6 +420,40 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .hchip.in{border-color:rgba(110,231,160,.45)}
 .hchip.in::after{content:"new";color:#6ee7a0;font-size:.68rem;font-weight:700;margin-left:2px}
 
+
+/* ---------- how it works steps ---------- */
+.steps3{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.steps3 .rule{text-decoration:none;color:inherit;display:grid}
+.steps3 .rule .go{color:#bdaffb;font-size:.88rem;font-weight:600;margin-top:4px}
+.steps3 .rule:hover .go{text-decoration:underline}
+
+/* ---------- live example launch ---------- */
+.demo-wrap{
+  max-width:1500px;margin-inline:auto;
+  background:linear-gradient(180deg,#15131f 0%,#1a1630 140%);
+  border:1px solid var(--line);border-radius:26px;
+  display:grid;grid-template-columns:minmax(280px,400px) 1fr;gap:clamp(24px,4vw,56px);align-items:center;
+  padding:42px clamp(20px,4vw,50px);overflow:hidden;position:relative;
+}
+.demo-wrap::before{content:"";position:absolute;inset:auto -20% -60% -20%;height:70%;background:radial-gradient(50% 100% at 50% 100%,rgba(122,99,232,.22),transparent 70%);pointer-events:none}
+.demo-wrap .card{width:100%}
+.demo-copy{display:grid;gap:14px;min-width:0}
+.demo-copy p{margin:0;color:var(--muted)}
+.demo-phases{display:grid;gap:9px;margin-top:2px}
+.dphase{display:flex;align-items:center;gap:11px;font-size:.93rem;color:var(--muted);transition:color .3s}
+.dphase .dot{width:9px;height:9px;border-radius:50%;background:#2a2444;flex:none;transition:background .3s,box-shadow .3s}
+.dphase.on{color:#fff}
+.dphase.on .dot{background:#bdaffb;box-shadow:0 0 9px #bdaffb}
+.dphase.done .dot{background:#6ee7a0;box-shadow:none}
+.demo-bar{height:7px;border-radius:99px;background:#111020;overflow:hidden;margin-top:6px}
+.demo-bar i{display:block;height:100%;border-radius:99px;width:0;background:linear-gradient(90deg,#6d5ae6,#bdaffb)}
+.demo-row{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:6px}
+.demo-row b{color:#dcd9ea}
+.badge{position:absolute;top:12px;right:12px;font-size:.74rem;font-weight:600;border-radius:999px;padding:.32em .85em;background:rgba(7,6,12,.65);color:#fff;border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(4px);transition:color .3s,border-color .3s}
+.badge.seal{color:#bdaffb;border-color:rgba(189,175,251,.45)}
+.badge.grad{color:#6ee7a0;border-color:rgba(110,231,160,.4)}
+@media (max-width:860px){.demo-wrap{grid-template-columns:1fr}}
+
 footer{padding-block:30px 38px;color:var(--muted);font-size:.88rem}
 footer .cols{display:flex;gap:24px;flex-wrap:wrap;align-items:center;border-top:1px solid rgba(255,255,255,.05);padding-top:26px}
 footer .cols .right{margin-left:auto;display:flex;gap:20px}
@@ -524,6 +558,73 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
             <span class="big">0%</span>
             <h3>Free until it works</h3>
             <p>Launching costs nothing and we take 0% on the curve. Our fee only switches on once a token graduates past $100k — we earn when you do.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="how">
+        <div class="sec-head">
+          <h2>How it works</h2>
+          <p>Three steps from an idea to a trading token — the dangerous parts automated away.</p>
+        </div>
+        <div class="steps3">
+          <a class="rule" href="docs">
+            <span class="big">01</span>
+            <h3>Launch sealed</h3>
+            <p>Name, ticker, image, and an optional dev buy up to 3%. The contract is generated inside the engine — nobody sees the CA before block 0, not even you.</p>
+            <span class="go">How sealing works →</span>
+          </a>
+          <a class="rule" href="docs">
+            <span class="big">02</span>
+            <h3>Trade the curve</h3>
+            <p>Everyone enters at the same $20k floor. Buys walk the price up, sells walk it down, and index takes 0% the whole way to $100k.</p>
+            <span class="go">The curve math →</span>
+          </a>
+          <a class="rule" href="docs">
+            <span class="big">03</span>
+            <h3>Graduate &amp; earn</h3>
+            <p>At $100k liquidity moves to Raydium and locks forever. A 1% pool fee switches on, creators earn 0.25% of every trade, and winners join the Index.</p>
+            <span class="go">Fees &amp; the Index →</span>
+          </a>
+        </div>
+      </section>
+
+      <section id="demo">
+        <div class="demo-wrap">
+          <article class="card">
+            <div class="banner" id="d-banner" style="background:radial-gradient(150px 110px at 78% 22%, #c4a7f7, transparent 70%),linear-gradient(120deg,#6d5ae6,#a78bfa)">
+              <span class="badge seal" id="d-badge">SEALED</span>
+              <span class="mark" id="d-mark" aria-hidden="true">?????</span>
+              <span class="avatar" id="d-avatar" style="background:#1d1930"></span>
+              <span class="socials"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.1 0l2.5-2.5a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.5 2.5a5 5 0 0 0 7.1 7.1L13 19.1"/></svg></span>
+            </div>
+            <div class="card-body">
+              <div class="id-row">
+                <div class="who">
+                  <span class="name" id="d-name">?????</span>
+                  <span class="chain" id="d-tick">$????</span>
+                </div>
+                <span class="when" id="d-when">launching…</span>
+              </div>
+              <div class="stats">
+                <div class="stat"><span class="lbl">MCAP</span><span class="val num" id="d-mcap">$20k</span></div>
+                <div class="stat"><span class="lbl">Dev buy</span><span class="val num">1.0%</span></div>
+                <div class="stat"><span class="lbl">Status</span><span class="val" id="d-status">Sealed</span></div>
+              </div>
+              <div class="demo-row"><span id="d-progress-label">Progress to $100k</span><b class="num" id="d-pct">—</b></div>
+              <div class="demo-bar"><i id="d-bar"></i></div>
+            </div>
+          </article>
+          <div class="demo-copy">
+            <h2>Watch a launch happen.</h2>
+            <p>This is the whole lifecycle — sealed mint, block-0 dev buy, the climb up the curve, graduation. No snipers anywhere in the story, because there's nowhere for them to stand. (Example token, on a loop.)</p>
+            <div class="demo-phases">
+              <div class="dphase" id="ph0"><span class="dot"></span>Contract generated sealed — CA hidden from everyone</div>
+              <div class="dphase" id="ph1"><span class="dot"></span>Block 0: token + dev buy land atomically, CA goes public</div>
+              <div class="dphase" id="ph2"><span class="dot"></span>Curve trading — everyone in at the $20k floor, 0% fees</div>
+              <div class="dphase" id="ph3"><span class="dot"></span>$100k: graduated to Raydium, liquidity locked forever</div>
+            </div>
+            <div><a class="cta-halo" href="create"><span class="btn-inner">+ Launch yours</span></a></div>
           </div>
         </div>
       </section>
@@ -721,6 +822,72 @@ function nextMonday(){const n=new Date();const d=new Date(Date.UTC(n.getUTCFullY
 function tickRot(){let ms=nextMonday()-Date.now();const d=Math.floor(ms/86400000);ms-=d*86400000;const h=Math.floor(ms/3600000);ms-=h*3600000;const m=Math.floor(ms/60000);$id("rot-in").textContent=`${d}d ${h}h ${m}m`;}
 tickRot(); setInterval(tickRot, 30000);
 
+/* ================= example launch lifecycle (demo, labelled) ================= */
+(function(){
+  const E = id => document.getElementById(id);
+  const catImg = '<img src="cat.gif" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+  const lockSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="#bdaffb" stroke-width="2" stroke-linecap="round" style="width:55%;height:55%;margin:22%"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+  const phases = ["ph0","ph1","ph2","ph3"].map(E);
+  function setPhase(n){
+    phases.forEach((el,i)=>{
+      el.classList.toggle("on", i===n);
+      el.classList.toggle("done", i<n);
+    });
+  }
+  function sealed(){
+    E("d-badge").textContent="SEALED"; E("d-badge").className="badge seal";
+    E("d-mark").textContent="?????"; E("d-name").textContent="?????";
+    E("d-tick").textContent="$????"; E("d-when").textContent="launching…";
+    E("d-avatar").innerHTML=lockSvg; E("d-avatar").style.background="#1d1930";
+    E("d-status").textContent="Sealed"; E("d-mcap").textContent="$20k";
+    E("d-pct").textContent="—"; E("d-bar").style.width="0%";
+    E("d-progress-label").textContent="Progress to $100k";
+    setPhase(0);
+  }
+  function reveal(){
+    E("d-badge").textContent="LIVE · BLOCK 0"; E("d-badge").className="badge";
+    E("d-mark").textContent="Dancing Cat"; E("d-name").textContent="Dancing Cat";
+    E("d-tick").textContent="$CAT"; E("d-when").textContent="sealed · just now";
+    E("d-avatar").innerHTML=catImg;
+    E("d-status").textContent="On the curve";
+    E("d-bar").style.width="20%"; E("d-pct").textContent="20%";
+    setPhase(1);
+  }
+  let raf;
+  function climb(){
+    setPhase(2);
+    E("d-badge").textContent="ON THE CURVE";
+    const t0 = performance.now(), DUR = 3800;
+    cancelAnimationFrame(raf);
+    (function step(now){
+      const p = Math.min(1,(now-t0)/DUR);
+      const e = p<.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+      E("d-mcap").textContent = "$"+Math.round(20+e*80)+"k";
+      E("d-pct").textContent = Math.round(20+e*80)+"%";
+      E("d-bar").style.width = (20+e*80)+"%";
+      if(p<1) raf = requestAnimationFrame(step);
+    })(t0);
+  }
+  function graduate(){
+    E("d-badge").textContent="GRADUATED"; E("d-badge").className="badge grad";
+    E("d-status").textContent="On Raydium";
+    E("d-progress-label").textContent="Liquidity locked forever";
+    E("d-pct").textContent="100%";
+    setPhase(3);
+  }
+  if(reduceMotion){
+    reveal(); E("d-bar").style.width="100%"; E("d-mcap").textContent="$100k"; graduate();
+    return;
+  }
+  (function loop(){
+    sealed();
+    setTimeout(reveal, 2200);
+    setTimeout(climb, 3600);
+    setTimeout(graduate, 7700);
+    setTimeout(loop, 11200);
+  })();
+})();
+
 /* ================= ambient particles ================= */
 (function(){
   if(reduceMotion) return;
@@ -749,7 +916,7 @@ tickRot(); setInterval(tickRot, 30000);
 
 /* ================= scroll reveals ================= */
 if(!reduceMotion){
-  const items = document.querySelectorAll(".sec-head,.rule,.basket");
+  const items = document.querySelectorAll(".sec-head,.rule,.basket,.demo-wrap");
   const vh = innerHeight;
   items.forEach(el=>{
     el.classList.add("rv");

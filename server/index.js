@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "8mb" }));
 
-const META_DIR = path.join(__dirname, "data", "meta");
+const META_DIR = path.join(process.env.DATA_DIR || path.join(__dirname, "data"), "meta");
 fs.mkdirSync(META_DIR, { recursive: true });
 
 /* in-memory map of prepared (unsubmitted) launches: mint -> details */

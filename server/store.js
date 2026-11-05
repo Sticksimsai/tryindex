@@ -4,7 +4,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const DATA_DIR = path.join(__dirname, "data");
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const FILE = path.join(DATA_DIR, "launches.json");
 
 function load() {

@@ -89,6 +89,7 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
     try { pfid = await platform.ensurePlatform(); } catch {}
   }
   if (pfid) params.platformId = pfid;
+  params.creatorFeeOn = s.CpmmCreatorFeeOn ? s.CpmmCreatorFeeOn.OnlyTokenB : undefined;
 
   const { transactions, extInfo } = await raydium.launchpad.createLaunchpad(params);
 

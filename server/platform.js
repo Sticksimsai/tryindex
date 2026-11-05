@@ -46,22 +46,35 @@ function platformId() {
 async function resolveCpConfig(s, cpmmProgram) {
   const { PublicKey } = require("@solana/web3.js");
   if (process.env.CP_CONFIG_ID) return new PublicKey(process.env.CP_CONFIG_ID);
+  const WANT = Number(process.env.POOL_FEE_RATE || 10_000); // 1% tier by default
   const apiBase = CFG.IS_MAINNET ? "https://api-v3.raydium.io" : "https://api-v3-devnet.raydium.io";
   try {
     const r = await fetch(apiBase + "/main/cpmm-config");
     const j = await r.json();
     const list = j?.data || j || [];
     if (Array.isArray(list) && list.length) {
-      const best = list.find((c) => c.tradeFeeRate === 2500) || list[0]; // prefer 0.25% tier
-      if (best?.id) return new PublicKey(best.id);
+      const best = list.find((c) => Number(c.tradeFeeRate) === WANT);
+      if (best?.id){ console.log(`platform: cpmm tier ${WANT} from API`); return new PublicKey(best.id); }
+      console.log("platform: API has no tier", WANT, "- probing PDAs");
     }
   } catch (e) {
     console.log("platform: cpmm-config API unavailable:", e.message);
   }
-  for (let i = 0; i < 5; i++) {
+  /* probe PDA indexes and decode tradeFeeRate to find the wanted tier */
+  let fallback = null;
+  for (let i = 0; i < 16; i++) {
     const pda = s.getPdaAmmConfigId(cpmmProgram, i).publicKey;
-    if (await connection.getAccountInfo(pda)) return pda;
+    const acc = await connection.getAccountInfo(pda);
+    if (!acc) continue;
+    try {
+      const cfg = s.CpmmConfigInfoLayout.decode(acc.data);
+      const rate = Number(cfg.tradeFeeRate ?? cfg.trade_fee_rate);
+      console.log(`platform: cpmm config index ${i} tradeFeeRate ${rate}`);
+      if (rate === WANT) return pda;
+      if (!fallback) fallback = pda;
+    } catch { if (!fallback) fallback = pda; }
   }
+  if (fallback){ console.log("platform: WARNING — wanted tier", WANT, "not found, using fallback config"); return fallback; }
   throw new Error("no live CPMM config found on " + CFG.NETWORK + " — set CP_CONFIG_ID env var");
 }
 
@@ -87,6 +100,22 @@ async function ensurePlatform() {
 
   /* needs creating — check the admin can pay for it */
   let balance = await connection.getBalance(admin.publicKey);
+  if (balance < 0.05 * LAMPORTS_PER_SOL && process.env.OLD_ADMIN_SECRET) {
+    try {
+      const { SystemProgram, Transaction, sendAndConfirmTransaction } = require("@solana/web3.js");
+      const old = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.OLD_ADMIN_SECRET)));
+      const oldBal = await connection.getBalance(old.publicKey);
+      const move = oldBal - 0.01 * LAMPORTS_PER_SOL;
+      if (move > 0) {
+        const tx = new Transaction().add(SystemProgram.transfer({
+          fromPubkey: old.publicKey, toPubkey: admin.publicKey, lamports: Math.floor(move),
+        }));
+        await sendAndConfirmTransaction(connection, tx, [old]);
+        balance = await connection.getBalance(admin.publicKey);
+        console.log("platform: swept", (move/LAMPORTS_PER_SOL).toFixed(3), "SOL from retired admin; balance", (balance/LAMPORTS_PER_SOL).toFixed(3));
+      }
+    } catch (e) { console.log("platform: sweep from old admin failed:", e.message); }
+  }
   if (balance < 0.05 * LAMPORTS_PER_SOL && !CFG.IS_MAINNET) {
     try {
       const sig = await connection.requestAirdrop(admin.publicKey, 2 * LAMPORTS_PER_SOL);
@@ -176,15 +205,15 @@ async function ensurePlatform() {
     platformVestingWallet: admin.publicKey,
     cpConfigId,
     /* program rule: creator_scale MUST be 0 at creation (require_eq in platform_config.rs);
-       creators earn via the CPMM creator-fee path post-graduation instead */
+       creators earn via creatorFeeRate + creator-fee-on-AMM instead */
     migrateCpLockNftScale: {
-      platformScale: new BN(Number(process.env.PLATFORM_SCALE || 250_000)),  // 25% of LP fee rights
+      platformScale: new BN(Number(process.env.PLATFORM_SCALE || 1_000_000)), // all LP fee rights -> platform (split off-chain: Index/treasury)
       creatorScale:  new BN(Number(process.env.CREATOR_SCALE  || 0)),
-      burnScale:     new BN(Number(process.env.BURN_SCALE     || 750_000)),  // 75% dead
+      burnScale:     new BN(Number(process.env.BURN_SCALE     || 0)),
     },
     transferFeeExtensionAuth: admin.publicKey,
-    creatorFeeRate: new BN(Number(process.env.CREATOR_FEE_RATE || 0)), // 0% on the curve
-    feeRate:        new BN(Number(process.env.PLATFORM_FEE_RATE || 0)), // 0% on the curve — the pledge
+    creatorFeeRate: new BN(Number(process.env.CREATOR_FEE_RATE ?? 2_500)), // 0.25% of trades to the creator (post-grad, creatorFeeOn)
+    feeRate:        new BN(Number(process.env.PLATFORM_FEE_RATE || 0)),    // 0% platform fee on the curve — the pledge
     name: process.env.PLATFORM_NAME || "index",
     web:  process.env.PLATFORM_WEB  || "https://launchonindex.fun",
     img:  process.env.PLATFORM_IMG  || "https://launchonindex.fun",
@@ -195,7 +224,7 @@ async function ensurePlatform() {
   const txId = res?.txId || (Array.isArray(res?.txIds) ? res.txIds[0] : "");
   cachedPlatformId = derived;
   ensured = true;
-  console.log(`platform: CREATED ${derived.toBase58()} (tx ${txId}) — 0% curve fee, LP fee split 25% platform / 75% burned`);
+  console.log(`platform: CREATED ${derived.toBase58()} (tx ${txId}) — 0% curve fee · post-grad: pool tier + 0.25% creator, LP fee rights -> platform`);
   return derived;
 }
 

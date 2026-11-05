@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const crypto = require("node:crypto");
 const CFG = require("./config");
 const store = require("./store");
-const { prepareLaunch, submitLaunch } = require("./launch");
+const { prepareLaunch, submitLaunch, curveParams, solUsd } = require("./launch");
 const platform = require("./platform");
 
 const app = express();
@@ -19,13 +19,16 @@ fs.mkdirSync(META_DIR, { recursive: true });
 /* in-memory map of prepared (unsubmitted) launches: mint -> details */
 const pending = new Map();
 
-app.get("/api/config", (_req, res) => {
+app.get("/api/config", async (_req, res) => {
   const pfid = platform.platformId();
+  let curve = null;
+  try { curve = curveParams(await solUsd()); } catch {}
   res.json({
     ok: true,
     network: CFG.NETWORK,
     maxDevBuyPct: CFG.MAX_DEV_BUY_PCT,
-    solPerPct: CFG.SOL_PER_PCT,
+    solPerPct: curve ? Math.round(curve.solPerPct * 100) / 100 : CFG.SOL_PER_PCT,
+    curve: curve ? { entryMcapUsd: curve.entryMcapUsd, gradMcapUsd: curve.gradMcapUsd, raiseSol: Math.round(curve.raiseSol), sellPct: Math.round(curve.sellPct*10)/10, solUsd: curve.solPx } : null,
     platformId: pfid ? pfid.toBase58() : null,
     platformAdmin: platform.adminPubkey(),
     mainPlatformId: platform.mainPlatformId() ? platform.mainPlatformId().toBase58() : null,

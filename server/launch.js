@@ -38,6 +38,54 @@ function programId(s) {
 
 const LAMPORTS = 1_000_000_000;
 
+/* ---- live SOL price (cached 5 min) anchors the USD mcap targets ---- */
+let _px = { v: 0, t: 0 };
+async function solUsd() {
+  if (Date.now() - _px.t < 300_000 && _px.v) return _px.v;
+  try {
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd");
+    const j = await r.json();
+    const v = Number(j?.solana?.usd);
+    if (v > 1) { _px = { v, t: Date.now() }; return v; }
+  } catch {}
+  try {
+    const r = await fetch("https://lite-api.jup.ag/price/v2?ids=So11111111111111111111111111111111111111112");
+    const j = await r.json();
+    const v = Number(Object.values(j?.data || {})[0]?.price);
+    if (v > 1) { _px = { v, t: Date.now() }; return v; }
+  } catch {}
+  return Number(process.env.SOL_USD_FALLBACK || 150);
+}
+
+/* ---- the index curve: entry $20k mcap -> graduate $100k mcap ----
+   Constant-product with virtual reserves. Price continuity at migration plus
+   the two mcap endpoints force the sell fraction:
+     x = sqrt(Mg/M0),  f = Mg / (Mg + M0*x)   (~69.1% of supply on the curve)
+     raise R = (Mg in SOL) * (1 - f)          (~31% of grad mcap)            */
+const SUPPLY_TOKENS = 1_000_000_000;
+const DEC = 1_000_000; // 6 decimals
+function curveParams(solPx) {
+  const M0 = Number(process.env.ENTRY_MCAP_USD || 20_000);
+  const Mg = Number(process.env.GRAD_MCAP_USD || 100_000);
+  const x = Math.sqrt(Mg / M0);
+  const f = Mg / (Mg + M0 * x);
+  const MgSol = Mg / solPx;
+  const R = MgSol * (1 - f);                      // raise in SOL
+  const B0 = R / (x - 1);                         // virtual quote (SOL)
+  const A0 = (f * SUPPLY_TOKENS) / (1 - 1 / x);   // virtual base (tokens)
+  const sellTokens = Math.round(f * SUPPLY_TOKENS);
+  /* cost of buying 1% of supply as the very first buy */
+  const onePct = 0.01 * SUPPLY_TOKENS;
+  const solPerPct = B0 * (A0 / (A0 - onePct) - 1);
+  return {
+    supply: new BN(String(SUPPLY_TOKENS)).mul(new BN(String(DEC))),
+    totalSellA: new BN(String(sellTokens)).mul(new BN(String(DEC))),
+    totalFundRaisingB: new BN(String(Math.round(R * LAMPORTS))),
+    raiseSol: R, entryMcapUsd: M0, gradMcapUsd: Mg, sellPct: f * 100, solPerPct, solPx,
+  };
+}
+
+
 /** Build the sealed create+dev-buy transaction set for a creator wallet. */
 async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
   const s = await loadSdk();
@@ -63,7 +111,8 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
   const configInfo = LaunchpadConfig.decode(configAcc.data);
   const mintBInfo = await raydium.token.getTokenInfo(configInfo.mintB);
 
-  const buyLamports = Math.floor(pct * CFG.SOL_PER_PCT * LAMPORTS);
+  const curve = isMain ? null : curveParams(await solUsd());
+  const buyLamports = Math.floor(pct * (curve ? curve.solPerPct : CFG.SOL_PER_PCT) * LAMPORTS);
 
   /* the platform's main token: reserved ticker, launched with a flat Token-2022
      transfer fee (1% by default). Only the platform admin wallet may launch it. */
@@ -95,6 +144,12 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
     txVersion: TxVersion.V0,
     computeBudgetConfig: { units: 600_000, microLamports: 100_000 },
   };
+  if (!isMain && curve) {
+    /* the index curve — $20k entry, $100k graduation — on every pad launch */
+    params.supply = curve.supply;
+    params.totalSellA = curve.totalSellA;
+    params.totalFundRaisingB = curve.totalFundRaisingB;
+  }
   if (isMain) {
     params.transferFeeExtensionParams = {
       transferFeeBasePoints: Number(process.env.MAIN_TOKEN_FEE_BPS || 100), // flat 1%
@@ -128,6 +183,7 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
     devBuyPct: pct,
     devBuySol: buyLamports / LAMPORTS,
     network: CFG.NETWORK,
+    curve: curve ? { entryMcapUsd: curve.entryMcapUsd, gradMcapUsd: curve.gradMcapUsd, raiseSol: Math.round(curve.raiseSol), sellPct: Math.round(curve.sellPct * 10) / 10, solUsd: curve.solPx } : null,
     txs,
   };
 }
@@ -150,4 +206,4 @@ async function submitLaunch({ txs }) {
   return { signatures: sigs };
 }
 
-module.exports = { prepareLaunch, submitLaunch, connection };
+module.exports = { prepareLaunch, submitLaunch, connection, curveParams, solUsd };

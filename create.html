@@ -304,11 +304,11 @@ h1{margin:0;font-family:var(--display);font-weight:400;line-height:1.18;letter-s
             <div class="frow">
               <div class="ffield">
                 <label for="f-name">Name</label>
-                <input type="text" id="f-name" maxlength="24" placeholder="Glorp">
+                <input type="text" id="f-name" maxlength="24" placeholder="Dancing Cat">
               </div>
               <div class="ffield">
                 <label for="f-ticker">Ticker</label>
-                <input type="text" id="f-ticker" maxlength="8" placeholder="GLORP">
+                <input type="text" id="f-ticker" maxlength="8" placeholder="CAT">
               </div>
             </div>
           </div>
@@ -410,9 +410,16 @@ function hues(str){
   return [`hsl(${h1} 70% 60%)`, `hsl(${h2} 75% 62%)`];
 }
 
+/* the example token shown until the form is touched */
+const EXAMPLE = { name:"Dancing Cat", tick:"CAT", img:"cat.gif" };
+const exImg = cls => `<img src="${EXAMPLE.img}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+
 function update(){
-  const name = $("f-name").value.trim() || "Token";
-  const tick = (($("f-ticker").value.trim() || name).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8)) || "TOKEN";
+  const rawName = $("f-name").value.trim();
+  const rawTick = $("f-ticker").value.trim();
+  const pristine = !rawName && !rawTick && !imgData;
+  const name = rawName || (pristine ? EXAMPLE.name : "Token");
+  const tick = ((rawTick || (pristine ? EXAMPLE.tick : name)).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8)) || "TOKEN";
   const [c1,c2] = hues(tick);
   $("pv-banner").style.background =
     `radial-gradient(150px 110px at 78% 22%, ${c2}, transparent 70%), linear-gradient(120deg, ${c1}, ${c2})`;
@@ -421,13 +428,13 @@ function update(){
   $("f-web").value = "launchonindex.fun/t/" + tick;
   $("pv-avatar").innerHTML = imgData
     ? `<img src="${imgData}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
-    : pfp("$"+tick, c1);
-  $("pv-avatar").style.background = imgData ? "#1d1930" : `linear-gradient(140deg,#fff,${c2})`;
+    : pristine ? exImg() : pfp("$"+tick, c1);
+  $("pv-avatar").style.background = (imgData || pristine) ? "#1d1930" : `linear-gradient(140deg,#fff,${c2})`;
   const x = $("f-x").value.trim();
   $("pv-socials").innerHTML =
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.1 0l2.5-2.5a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.5 2.5a5 5 0 0 0 7.1 7.1L13 19.1"/></svg>` +
     (x ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3h4.6l4.1 5.7L17.6 3H21l-6.6 8 7 10h-4.6l-4.5-6.3L7 21H3.5l7-8.4L4 3z"/></svg>` : "");
-  if(!imgData) $("dpf").innerHTML = pfp("$"+tick, c1);
+  if(!imgData) $("dpf").innerHTML = pristine ? exImg() : pfp("$"+tick, c1);
 }
 ["f-name","f-ticker","f-x"].forEach(id=>$(id).addEventListener("input", update));
 

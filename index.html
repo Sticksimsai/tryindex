@@ -344,7 +344,6 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
   /* 01 — the lock clicks shut */
   .r1 .rico .shk{animation:shkClick 4.2s ease-in-out infinite;transform-origin:12px 11px}
   @keyframes shkClick{0%,58%,100%{transform:translateY(0)}66%{transform:translateY(-2.6px)}74%{transform:translateY(0)}78%{transform:translateY(-.6px)}82%{transform:translateY(0)}}
-  .r1 .rico{position:relative}
   .r1 .rico::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:1px solid var(--ac);opacity:0;animation:lockPing 4.2s ease-out infinite}
   @keyframes lockPing{0%,72%{opacity:0;transform:scale(1)}76%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
   /* 02 — the percent seesaws against the cap */
@@ -360,6 +359,40 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
   @keyframes zapCharge{0%,52%,100%{opacity:1;filter:none}58%{opacity:.35}62%{opacity:1;filter:drop-shadow(0 0 7px var(--ac))}68%{opacity:.5}72%{opacity:1;filter:drop-shadow(0 0 10px var(--ac))}86%{filter:none}}
 }
 .rule p{margin:0;color:var(--muted);font-size:.92rem}
+/* per-card mini scenes — short 4–5s loops */
+.rmini{margin-top:4px;border-top:1px dashed rgba(255,255,255,.08);padding-top:13px;display:flex;align-items:center;gap:10px;min-height:34px}
+/* 01: the CA stays scrambled, flashes public, reseals */
+.r1m .ca{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;letter-spacing:.06em;color:var(--muted);transition:color .3s}
+.r1m .ca.on{color:#6ee7a0}
+/* 02: the dev buy bar bounces off the cap */
+.r2m{position:relative;flex:1;height:9px;border-radius:99px;background:#111020}
+.r2m .fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#6d5ae6,var(--ac))}
+.r2m .capline{position:absolute;left:76%;top:-5px;bottom:-5px;width:2.5px;border-radius:2px;background:#f87171}
+.rmini .mx{font-size:.72rem;font-weight:600;color:#f87171;white-space:nowrap}
+@media (prefers-reduced-motion:no-preference){
+  .r2m .fill{animation:capFill 4.6s cubic-bezier(.2,.7,.2,1) infinite}
+  @keyframes capFill{0%,6%{width:0}42%{width:76%}52%{width:72.5%}62%{width:76%}70%{width:74.5%}78%,92%{width:76%}100%{width:0}}
+}
+@media (prefers-reduced-motion:reduce){.r2m .fill{width:76%}}
+/* 03: price stairs climb from the floor */
+.r3m svg{width:100%;height:38px;display:block}
+.r3m .stair{fill:none;stroke:var(--ac);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.r3m .lvl{stroke:rgba(255,255,255,.14);stroke-dasharray:3 5}
+@media (prefers-reduced-motion:no-preference){
+  .r3m .stair{stroke-dasharray:190;stroke-dashoffset:190;animation:stairUp 4.4s cubic-bezier(.2,.7,.2,1) infinite}
+  @keyframes stairUp{0%,8%{stroke-dashoffset:190}58%,90%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:.3}}
+}
+/* 04: fee state flips once the bar crosses */
+.r4m{display:flex;align-items:center;gap:9px;font-size:.76rem;font-weight:600;flex-wrap:wrap}
+.r4m .z0{color:#6ee7a0}
+.r4m .zarr{color:var(--muted)}
+.r4m .z1{color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .r4m .z0{animation:feeA 5s ease-in-out infinite}
+  .r4m .z1{animation:feeB 5s ease-in-out infinite}
+  @keyframes feeA{0%,46%{opacity:1;text-shadow:0 0 8px rgba(110,231,160,.5)}56%,92%{opacity:.35;text-shadow:none}100%{opacity:1}}
+  @keyframes feeB{0%,46%{color:#9b97ad;opacity:.45}56%,92%{color:#bdaffb;opacity:1;text-shadow:0 0 8px rgba(189,175,251,.45)}100%{opacity:.45;color:#9b97ad}}
+}
 .rule a{color:#bdaffb;text-decoration:none;font-weight:500}
 .rule a:hover{text-decoration:underline}
 
@@ -588,24 +621,32 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
             <span class="big">Block 0</span>
             <h3>Stealth contract</h3>
             <p>The mint is generated server-side and fired atomically. The contract address goes public to everyone at the same second — devs can't tip off bundlers with a CA that doesn't exist yet.</p>
+            <div class="rmini r1m"><span class="ca num" id="r1ca">????????????????????</span></div>
           </div>
           <div class="rule r2" style="--ac:#f0a6ce">
             <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
             <span class="big">3%</span>
             <h3>One dev buy, capped</h3>
             <p>A single dev buy rides inside the launch transaction, capped at 3% of supply. After that, the dev queues up with everyone else.</p>
+            <div class="rmini"><div class="r2m"><i class="fill"></i><i class="capline"></i></div><b class="mx">3% cap</b></div>
           </div>
           <div class="rule r3" style="--ac:#8fe3b4">
             <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tr" d="M3 17l6-6 4 4 8-8"/><path class="trh" d="M14 7h7v7"/></svg></span>
             <span class="big">$20k</span>
             <h3>Entry floor</h3>
             <p>Every token opens at a $20k market cap. No sub-$5k sniper ramp, no 25× head start for bots — the first buyer and the hundredth get comparable entries.</p>
+            <div class="rmini r3m"><svg viewBox="0 0 150 38" preserveAspectRatio="none" aria-hidden="true">
+              <line class="lvl" x1="2" y1="33" x2="148" y2="33"/>
+              <line class="lvl" x1="2" y1="5" x2="148" y2="5"/>
+              <path class="stair" d="M4 33 H34 V26 H64 V19 H94 V12 H124 V5 H146"/>
+            </svg></div>
           </div>
           <div class="rule r4" style="--ac:#f5cf8f">
             <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
             <span class="big">0%</span>
             <h3>Free until it works</h3>
             <p>Launching costs nothing and we take 0% on the curve. Our fee only switches on once a token graduates past $100k — we earn when you do.</p>
+            <div class="rmini r4m"><span class="z0">0% on the curve</span><span class="zarr">→</span><span class="z1">1% + 0.25% after $100k</span></div>
           </div>
         </div>
       </section>
@@ -886,6 +927,23 @@ drawRing(0);
 function nextMonday(){const n=new Date();const d=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()));const add=((8-d.getUTCDay())%7)||7;d.setUTCDate(d.getUTCDate()+add);return d;}
 function tickRot(){let ms=nextMonday()-Date.now();const d=Math.floor(ms/86400000);ms-=d*86400000;const h=Math.floor(ms/3600000);ms-=h*3600000;const m=Math.floor(ms/60000);$id("rot-in").textContent=`${d}d ${h}h ${m}m`;}
 tickRot(); setInterval(tickRot, 30000);
+
+/* ================= rules card 01: sealed CA scramble ================= */
+(function(){
+  const el = document.getElementById("r1ca");
+  if(!el) return;
+  if(reduceMotion){ el.textContent = "sealed until block 0"; return; }
+  const CH = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789";
+  const rnd = () => Array.from({length:20},()=>CH[Math.floor(Math.random()*CH.length)]).join("");
+  let open = false;
+  setInterval(()=>{ if(!open) el.textContent = rnd(); }, 95);
+  setInterval(()=>{
+    open = true;
+    el.textContent = rnd();
+    el.classList.add("on");
+    setTimeout(()=>{ el.classList.remove("on"); open = false; }, 1150);
+  }, 4200);
+})();
 
 /* ================= example launch lifecycle (demo, labelled) ================= */
 (function(){

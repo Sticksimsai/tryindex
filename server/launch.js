@@ -65,6 +65,17 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
 
   const buyLamports = Math.floor(pct * CFG.SOL_PER_PCT * LAMPORTS);
 
+  /* the platform's main token: reserved ticker, launched with a flat Token-2022
+     transfer fee (1% by default). Only the platform admin wallet may launch it. */
+  const MAIN = (process.env.MAIN_TOKEN_SYMBOL || "INDEX").toUpperCase();
+  const isMain = String(symbol).toUpperCase() === MAIN;
+  if (isMain) {
+    const adminPk = platform.adminPubkey();
+    if (!adminPk || creator !== adminPk) {
+      throw new Error("the $" + MAIN + " ticker is reserved for the platform");
+    }
+  }
+
   const params = {
     programId: pid,
     mintA: mintKeypair.publicKey,
@@ -84,6 +95,13 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
     txVersion: TxVersion.V0,
     computeBudgetConfig: { units: 600_000, microLamports: 100_000 },
   };
+  if (isMain) {
+    params.transferFeeExtensionParams = {
+      transferFeeBasePoints: Number(process.env.MAIN_TOKEN_FEE_BPS || 100), // flat 1%
+      maxinumFee: new BN("1000000000000000"), // effectively uncapped (Raydium's field spelling)
+    };
+  }
+
   let pfid = platform.platformId();
   if (!pfid) {
     try { pfid = await platform.ensurePlatform(); } catch {}

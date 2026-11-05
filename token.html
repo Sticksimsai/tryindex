@@ -276,10 +276,10 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
           </div>
           <div class="tok-stats">
             <div class="ts"><span class="l">MCAP</span><span class="v num" id="t-mc">$20k</span></div>
-            <div class="ts"><span class="l">Liquidity</span><span class="v num">—</span></div>
-            <div class="ts"><span class="l">Holders</span><span class="v num">—</span></div>
-            <div class="ts"><span class="l">Vol 24h</span><span class="v num">—</span></div>
-            <div class="ts"><span class="l">Status</span><span class="v" style="color:#bdaffb">On the curve</span></div>
+            <div class="ts"><span class="l">Curve SOL</span><span class="v num" id="t-liq">—</span></div>
+            <div class="ts"><span class="l">Traders</span><span class="v num" id="t-hold">—</span></div>
+            <div class="ts"><span class="l">Vol 24h</span><span class="v num" id="t-vol">—</span></div>
+            <div class="ts"><span class="l">Status</span><span class="v" id="t-status" style="color:#bdaffb">On the curve</span></div>
           </div>
           <div class="chartwrap"><canvas id="chart" aria-label="Price chart — recording starts with the first trades"></canvas></div>
           <div class="tf">
@@ -287,7 +287,7 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
             <button class="tfb on" data-tf="5m">5m</button>
             <button class="tfb" data-tf="15m">15m</button>
             <button class="tfb" data-tf="1h">1h</button>
-            <span class="live" style="color:var(--muted)"><i style="background:var(--muted);box-shadow:none"></i>Awaiting trades</span>
+            <span class="live" id="liveind" style="color:var(--muted)"><i style="background:var(--muted);box-shadow:none"></i>Awaiting trades</span>
           </div>
         </div>
 
@@ -440,17 +440,126 @@ function drawEmpty(){
   ctx.fillText("The chart starts drawing from this token's first curve trade.", W/2, H/2 + 12);
   ctx.textAlign = "left";
 }
-size(); drawEmpty();
-addEventListener("resize", ()=>{size(); drawEmpty();});
+/* ---------------- live data from the engine's trade indexer ---------------- */
+let trades = [], stats = null, solPx = 0, tf = 300;
+const fmtUsd = n => n >= 1e6 ? "$" + (n/1e6).toFixed(2) + "m" : n >= 1000 ? "$" + (n/1000).toFixed(1) + "k" : "$" + Math.round(n);
+
+function candles(){
+  if(!trades.length || !solPx) return [];
+  const ms = tf * 1000, out = [];
+  let cur = null;
+  for(const tr of trades){
+    const bucket = Math.floor(tr.t / ms) * ms;
+    const v = tr.mcapSol * solPx;
+    if(!cur || cur.t !== bucket){ if(cur) out.push(cur); cur = {t:bucket, o:v, h:v, l:v, c:v}; }
+    else { cur.h = Math.max(cur.h, v); cur.l = Math.min(cur.l, v); cur.c = v; }
+  }
+  if(cur) out.push(cur);
+  return out.slice(-120);
+}
+
+function draw(){
+  if(!trades.length || !solPx){ drawEmpty(); return; }
+  const cs = candles();
+  ctx.clearRect(0,0,W,H);
+  const padL = 8, padR = 72, padT = 14, padB = 26;
+  let lo = Math.min(...cs.map(c=>c.l), 18000), hi = Math.max(...cs.map(c=>c.h), 24000);
+  if(hi > 70000) hi = Math.max(hi, 105000);
+  const span = hi - lo || 1;
+  const vy = v => padT + (H-padT-padB) * (1 - (v-lo)/span);
+  ctx.font = "10px Poppins, sans-serif";
+  for(let g=0; g<5; g++){
+    const v = lo + span*g/4, gy = vy(v);
+    ctx.strokeStyle = "rgba(255,255,255,.05)";
+    ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(W-padR,gy); ctx.stroke();
+    ctx.fillStyle = "#9b97ad"; ctx.fillText(fmtUsd(v), W-padR+6, gy+3);
+  }
+  for(const [v,col,lab] of [[20000,"rgba(189,175,251,.4)","$20k entry"],[100000,"rgba(143,227,180,.45)","$100k grad"]]){
+    if(v < lo || v > hi) continue;
+    ctx.strokeStyle = col; ctx.setLineDash([4,5]);
+    ctx.beginPath(); ctx.moveTo(padL,vy(v)); ctx.lineTo(W-padR,vy(v)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#9b97ad"; ctx.fillText(lab, W-padR+6, vy(v)+13);
+  }
+  const n = cs.length, cw = Math.min(18, (W-padL-padR)/Math.max(n,24));
+  cs.forEach((c,i)=>{
+    const gx = padL + (W-padL-padR) - ((n-i)-0.5)*cw;
+    const up = c.c >= c.o, col = up ? "#8fe3b4" : "#f0a6ce";
+    ctx.strokeStyle = col; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(gx,vy(c.l)); ctx.lineTo(gx,vy(c.h)); ctx.stroke();
+    ctx.fillStyle = col;
+    const top = Math.max(c.o,c.c), bot = Math.min(c.o,c.c);
+    ctx.fillRect(gx-cw*0.32, vy(top), cw*0.64, Math.max(2, vy(bot)-vy(top)));
+  });
+}
+
+function renderTrades(){
+  const el = document.getElementById("txs");
+  if(!trades.length){
+    el.innerHTML = '<p style="margin:0;padding-block:28px;text-align:center;color:var(--muted);font-size:.88rem">No trades yet — buys and sells appear here live.</p>';
+    return;
+  }
+  el.innerHTML = trades.slice(-30).reverse().map(tr=>{
+    const col = tr.side === "buy" ? "#8fe3b4" : "#f0a6ce";
+    return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:7px 2px;border-bottom:1px solid rgba(255,255,255,.05);font-size:.8rem">'
+      + '<span style="color:'+col+';font-weight:600;min-width:34px;text-transform:uppercase">'+tr.side+'</span>'
+      + '<span class="num">'+tr.sol.toFixed(2)+' SOL</span>'
+      + '<span class="num" style="color:var(--muted)">'+(tr.tokens/1e6).toFixed(1)+'M</span>'
+      + '<span class="num" style="color:var(--muted)">'+tr.trader.slice(0,4)+'…'+tr.trader.slice(-4)+'</span>'
+      + '<span class="num" style="color:var(--muted)">'+agoTxt(tr.t)+'</span>'
+      + '</div>';
+  }).join("");
+}
+
+function setTxt(id, v){ const el = document.getElementById(id); if(el && v != null) el.textContent = v; }
+function renderStats(){
+  if(!stats) return;
+  const mc = stats.mcapUsd || (stats.mcapSol && solPx ? stats.mcapSol * solPx : null);
+  if(mc){
+    setTxt("t-mc", fmtUsd(mc)); setTxt("t-price", fmtUsd(mc));
+    const chg = document.getElementById("t-chg");
+    if(chg){
+      const pct = (mc/20000 - 1) * 100;
+      chg.textContent = (pct >= 0 ? "+" : "") + pct.toFixed(1) + "% from entry";
+      chg.style.color = pct >= 0 ? "#8fe3b4" : "#f0a6ce";
+    }
+  }
+  if(stats.curveSol != null) setTxt("t-liq", stats.curveSol.toFixed(1) + " SOL");
+  if(stats.traders) setTxt("t-hold", String(stats.traders));
+  if(stats.vol24Sol != null) setTxt("t-vol", stats.vol24Sol.toFixed(1) + " SOL");
+  const st = document.getElementById("t-status");
+  if(st && stats.status === "graduated"){ st.textContent = "Graduated"; st.style.color = "#8fe3b4"; }
+  const li = document.getElementById("liveind");
+  if(li){
+    const fresh = stats.lastTradeAt && Date.now() - stats.lastTradeAt < 180000;
+    li.innerHTML = fresh
+      ? '<i style="background:#8fe3b4"></i>Live'
+      : '<i style="background:var(--muted);box-shadow:none"></i>' + (trades.length ? "Recorded" : "Awaiting trades");
+    li.style.color = fresh ? "#8fe3b4" : "var(--muted)";
+  }
+}
+
+async function refresh(){
+  try{
+    const r = await fetch("/api/trades/" + mintParam);
+    if(!r.ok) return;
+    const j = await r.json();
+    trades = j.trades || []; stats = j.stats || null;
+    if(j.solUsd) solPx = j.solUsd;
+    draw(); renderTrades(); renderStats();
+  }catch{}
+}
+
+size(); drawEmpty(); refresh();
+setInterval(refresh, 10000);
+addEventListener("resize", ()=>{size(); draw();});
 
 document.querySelectorAll(".tfb").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".tfb").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");
+  tf = {"1m":60,"5m":300,"15m":900,"1h":3600}[b.dataset.tf] || 300;
+  draw();
 }));
-
-/* ---------------- trades: empty until indexer ---------------- */
-document.getElementById("txs").innerHTML =
-  '<p style="margin:0;padding-block:28px;text-align:center;color:var(--muted);font-size:.88rem">No trades yet — buys and sells appear here live.</p>';
 
 document.getElementById("claim").addEventListener("click", ()=>say("Creator fees accrue after graduation — nothing to claim yet."));
 

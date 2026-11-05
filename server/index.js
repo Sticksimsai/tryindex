@@ -8,6 +8,7 @@ const CFG = require("./config");
 const store = require("./store");
 const { prepareLaunch, submitLaunch, curveParams, solUsd } = require("./launch");
 const platform = require("./platform");
+const indexer = require("./indexer");
 
 const app = express();
 app.use(cors());
@@ -119,6 +120,23 @@ app.post("/api/launch/submit", async (req, res) => {
 });
 
 app.get("/api/launches", (_req, res) => res.json(store.list()));
+app.get("/api/trades/:mint", async (req, res) => {
+  const t = store.get(req.params.mint);
+  if (!t) return res.status(404).json({ error: "not found" });
+  let px = 0;
+  try { px = await solUsd(); } catch {}
+  res.json({
+    ok: true,
+    trades: indexer.tradesFor(req.params.mint, 500),
+    solUsd: px,
+    stats: {
+      mcapSol: t.mcapSol || null, mcapUsd: t.mcapUsd || null,
+      vol24Sol: t.vol24Sol || 0, curveSol: t.curveSol || 0,
+      traders: t.traders || 0, status: t.status || "live",
+      lastTradeAt: t.lastTradeAt || null,
+    },
+  });
+});
 app.get("/api/launches/:mint", (req, res) => {
   const t = store.get(req.params.mint);
   if (!t) return res.status(404).json({ error: "not found" });
@@ -143,4 +161,5 @@ app.listen(CFG.PORT, () => {
     if (e && e.logs) console.error("tx logs:\n" + e.logs.join("\n"));
     if (e && e.stack) console.error(e.stack.split("\n").slice(0, 6).join("\n"));
   });
+  indexer.start();
 });

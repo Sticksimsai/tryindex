@@ -421,11 +421,37 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
 .hchip.in::after{content:"new";color:#6ee7a0;font-size:.68rem;font-weight:700;margin-left:2px}
 
 
-/* ---------- how it works steps ---------- */
-.steps3{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
-.steps3 .rule{text-decoration:none;color:inherit;display:grid}
-.steps3 .rule .go{color:#bdaffb;font-size:.88rem;font-weight:600;margin-top:4px}
-.steps3 .rule:hover .go{text-decoration:underline}
+/* ---------- how it works: connected timeline, no boxes ---------- */
+.steps3{max-width:1280px;margin-inline:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,4.5vw,64px);position:relative}
+.step3{position:relative;display:grid;gap:10px;align-content:start;padding-top:72px;text-decoration:none;color:inherit;min-width:0}
+.step3 .node{
+  position:absolute;top:0;left:0;width:50px;height:50px;border-radius:14px;z-index:1;
+  display:grid;place-items:center;font-family:var(--display);font-size:1.15rem;color:#fff;
+  background:linear-gradient(160deg,#2a2444,#17142a);border:1px solid rgba(189,175,251,.45);
+  box-shadow:0 0 20px rgba(139,124,247,.25);
+  transition:transform .25s,box-shadow .25s,border-color .25s;
+}
+.step3::before{
+  content:"";position:absolute;top:25px;left:62px;right:calc(-1*clamp(24px,4.5vw,64px) + 10px);height:2px;
+  background:linear-gradient(90deg,rgba(189,175,251,.5),rgba(189,175,251,.06));
+}
+.step3:last-child::before{display:none}
+.step3 .ghost{
+  position:absolute;top:-18px;right:-4px;font-family:var(--display);font-size:5rem;line-height:1;
+  color:rgba(189,175,251,.07);pointer-events:none;user-select:none;
+}
+.step3 h3{margin:0;font-family:var(--display);font-weight:400;font-size:1.18rem;letter-spacing:.02em}
+.step3 p{margin:0;color:var(--muted);font-size:.93rem}
+.step3 .go{color:#bdaffb;font-size:.88rem;font-weight:600;margin-top:2px}
+.step3:hover .node{transform:translateY(-4px);border-color:rgba(189,175,251,.85);box-shadow:0 0 28px rgba(139,124,247,.5)}
+.step3:hover .go{text-decoration:underline}
+@media (max-width:860px){
+  .steps3{grid-template-columns:1fr;gap:30px}
+  .step3{padding-top:0;padding-left:70px}
+  .step3::before{top:58px;left:24px;right:auto;bottom:-26px;width:2px;height:auto;
+    background:linear-gradient(180deg,rgba(189,175,251,.5),rgba(189,175,251,.06))}
+  .step3 .ghost{display:none}
+}
 
 /* ---------- live example launch ---------- */
 .demo-wrap{
@@ -568,20 +594,23 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
           <p>Three steps from an idea to a trading token — the dangerous parts automated away.</p>
         </div>
         <div class="steps3">
-          <a class="rule" href="docs">
-            <span class="big">01</span>
+          <a class="step3" href="docs">
+            <span class="node num">01</span>
+            <span class="ghost num" aria-hidden="true">01</span>
             <h3>Launch sealed</h3>
             <p>Name, ticker, image, and an optional dev buy up to 3%. The contract is generated inside the engine — nobody sees the CA before block 0, not even you.</p>
             <span class="go">How sealing works →</span>
           </a>
-          <a class="rule" href="docs">
-            <span class="big">02</span>
+          <a class="step3" href="docs">
+            <span class="node num">02</span>
+            <span class="ghost num" aria-hidden="true">02</span>
             <h3>Trade the curve</h3>
             <p>Everyone enters at the same $20k floor. Buys walk the price up, sells walk it down, and index takes 0% the whole way to $100k.</p>
             <span class="go">The curve math →</span>
           </a>
-          <a class="rule" href="docs">
-            <span class="big">03</span>
+          <a class="step3" href="docs">
+            <span class="node num">03</span>
+            <span class="ghost num" aria-hidden="true">03</span>
             <h3>Graduate &amp; earn</h3>
             <p>At $100k liquidity moves to Raydium and locks forever. A 1% pool fee switches on, creators earn 0.25% of every trade, and winners join the Index.</p>
             <span class="go">Fees &amp; the Index →</span>
@@ -916,7 +945,7 @@ tickRot(); setInterval(tickRot, 30000);
 
 /* ================= scroll reveals ================= */
 if(!reduceMotion){
-  const items = document.querySelectorAll(".sec-head,.rule,.basket,.demo-wrap");
+  const items = document.querySelectorAll(".sec-head,.rule,.step3,.basket,.demo-wrap");
   const vh = innerHeight;
   items.forEach(el=>{
     el.classList.add("rv");

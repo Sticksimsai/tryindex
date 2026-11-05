@@ -121,6 +121,12 @@ async function updateStats(l, d) {
 
 async function pollMint(l) {
   const d = loadMint(l.mint);
+  /* recover from an earlier run that advanced the cursor without parsing
+     anything: refetch the full recent history once */
+  if (!d.trades.length && d.lastSig) {
+    console.log(`indexer: ${l.symbol}: cursor set but no trades — backfilling`);
+    d.lastSig = null;
+  }
   let sigs;
   try {
     const opts = { limit: 50 };

@@ -111,9 +111,6 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
   const configInfo = LaunchpadConfig.decode(configAcc.data);
   const mintBInfo = await raydium.token.getTokenInfo(configInfo.mintB);
 
-  const curve = isMain ? null : curveParams(await solUsd());
-  const buyLamports = Math.floor(pct * (curve ? curve.solPerPct : CFG.SOL_PER_PCT) * LAMPORTS);
-
   /* the platform's main token: reserved ticker, launched with a flat Token-2022
      transfer fee (1% by default). Only the platform admin wallet may launch it. */
   const MAIN = (process.env.MAIN_TOKEN_SYMBOL || "INDEX").toUpperCase();
@@ -124,6 +121,9 @@ async function prepareLaunch({ creator, name, symbol, uri, devBuyPct }) {
       throw new Error("the $" + MAIN + " ticker is reserved for the platform");
     }
   }
+
+  const curve = isMain ? null : curveParams(await solUsd());
+  const buyLamports = Math.floor(pct * (curve ? curve.solPerPct : CFG.SOL_PER_PCT) * LAMPORTS);
 
   const params = {
     programId: pid,

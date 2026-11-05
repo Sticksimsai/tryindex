@@ -132,7 +132,7 @@ async function pollMint(l) {
   }
   if (!sigs.length) return;
   const fresh = sigs.filter((s) => !s.err).reverse(); // oldest first
-  let added = 0;
+  let added = 0, errors = 0;
   for (const s of fresh) {
     try {
       const tx = await connection.getTransaction(s.signature, {
@@ -141,10 +141,18 @@ async function pollMint(l) {
       });
       const tr = parseTrade(tx, l.mint, s);
       if (tr && !d.trades.some((x) => x.sig === tr.sig)) { d.trades.push(tr); added++; }
-    } catch (e) { /* transient RPC miss — retried next cycle via lastSig */ }
+    } catch (e) {
+      errors++;
+      if (errors <= 3) console.log("indexer: tx fetch/parse error on", l.symbol, "-", e.message);
+    }
     await new Promise((r) => setTimeout(r, 120)); // stay well under RPC limits
   }
-  d.lastSig = sigs[0].signature;
+  if (!added && fresh.length) {
+    console.log(`indexer: ${l.symbol}: ${fresh.length} new sig(s), parsed 0 trades${errors ? ` (${errors} errors — will retry)` : ""}`);
+  }
+  /* only advance the cursor when every tx was fetched cleanly, so transient
+     RPC misses are retried next cycle instead of being skipped forever */
+  if (errors === 0) d.lastSig = sigs[0].signature;
   if (d.trades.length > MAX_TRADES) d.trades = d.trades.slice(-MAX_TRADES);
   saveMint(l.mint);
   if (added) {

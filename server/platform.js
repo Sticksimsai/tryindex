@@ -1,14 +1,18 @@
 "use strict";
-/* The index PlatformConfig — our own platform identity on Raydium LaunchLab.
-   This is what makes the economics ours instead of Raydium's defaults:
-   - feeRate 0        → index takes 0% of curve trades ("0% under $100k")
-   - creatorFeeRate 0 → creators also earn nothing pre-graduation
-   - migrateCpLockNftScale → at graduation the locked LP's fee rights split
-     platform / creator / burn (liquidity itself is locked forever either way)
-   The platform id is a PDA of the admin key, so it is derived deterministically
-   and created on boot if it doesn't exist yet. */
+/* The index PlatformConfigs — our platform identities on Raydium LaunchLab.
+   TWO platforms, because LaunchLab fee rates are fixed per platform:
 
-const { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } = require("@solana/web3.js");
+   1. PAD platform (PLATFORM_ADMIN_SECRET) — every normal launch:
+      feeRate 0 (0% curve) · creatorFeeRate 0.25% · 1% CPMM tier · LP fee rights -> platform
+
+   2. MAIN platform (MAIN_PLATFORM_ADMIN_SECRET) — the $INDEX token itself:
+      feeRate 0 · creatorFeeRate 0 · 1% CPMM tier · LP fee rights -> platform
+      => 0% until $100k, then the 1% pool fee flows entirely to the admin side
+      (its claim wallets point at the PAD admin so all revenue lands in one wallet)
+
+   Platform ids are PDAs of their admin keys; both are created on boot if missing. */
+
+const { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } = require("@solana/web3.js");
 const BN = require("bn.js");
 const CFG = require("./config");
 
@@ -20,33 +24,36 @@ async function loadSdk() {
 
 const connection = new Connection(CFG.RPC_URL, "confirmed");
 
-let cachedPlatformId = null; // PublicKey | null
-let ensured = false;
+const state = {
+  pad: { id: null, ensured: false },
+  main: { id: null, ensured: false },
+};
 
-function adminKeypair() {
-  const raw = process.env.PLATFORM_ADMIN_SECRET;
+function keypairFromEnv(name) {
+  const raw = process.env[name];
   if (!raw) return null;
   try {
     return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(raw)));
-  } catch (e) {
-    console.error("PLATFORM_ADMIN_SECRET is not a valid JSON secret key array");
+  } catch {
+    console.error(name, "is not a valid JSON secret key array");
     return null;
   }
 }
+const padAdmin = () => keypairFromEnv("PLATFORM_ADMIN_SECRET");
+const mainAdmin = () => keypairFromEnv("MAIN_PLATFORM_ADMIN_SECRET");
 
-/** The platform id launches should use right now (null = Raydium default). */
 function platformId() {
   if (CFG.PLATFORM_ID) return new PublicKey(CFG.PLATFORM_ID);
-  return cachedPlatformId;
+  return state.pad.id;
+}
+function mainPlatformId() {
+  return state.main.id;
 }
 
-/** Derive, and create on-chain if missing. Called at boot; safe to re-run. */
-/* Find a CPMM fee-tier config that actually exists on this network.
-   Order: env override → Raydium API list → PDA(index 0..4) with a live account. */
+/* Find a CPMM fee-tier config that actually exists on this network. */
 async function resolveCpConfig(s, cpmmProgram) {
-  const { PublicKey } = require("@solana/web3.js");
   if (process.env.CP_CONFIG_ID) return new PublicKey(process.env.CP_CONFIG_ID);
-  const WANT = Number(process.env.POOL_FEE_RATE || 10_000); // 1% tier by default
+  const WANT = Number(process.env.POOL_FEE_RATE || 10_000); // 1% tier
   const apiBase = CFG.IS_MAINNET ? "https://api-v3.raydium.io" : "https://api-v3-devnet.raydium.io";
   try {
     const r = await fetch(apiBase + "/main/cpmm-config");
@@ -54,13 +61,12 @@ async function resolveCpConfig(s, cpmmProgram) {
     const list = j?.data || j || [];
     if (Array.isArray(list) && list.length) {
       const best = list.find((c) => Number(c.tradeFeeRate) === WANT);
-      if (best?.id){ console.log(`platform: cpmm tier ${WANT} from API`); return new PublicKey(best.id); }
+      if (best?.id) { console.log(`platform: cpmm tier ${WANT} from API`); return new PublicKey(best.id); }
       console.log("platform: API has no tier", WANT, "- probing PDAs");
     }
   } catch (e) {
     console.log("platform: cpmm-config API unavailable:", e.message);
   }
-  /* probe PDA indexes and decode tradeFeeRate to find the wanted tier */
   let fallback = null;
   for (let i = 0; i < 16; i++) {
     const pda = s.getPdaAmmConfigId(cpmmProgram, i).publicKey;
@@ -69,69 +75,60 @@ async function resolveCpConfig(s, cpmmProgram) {
     try {
       const cfg = s.CpmmConfigInfoLayout.decode(acc.data);
       const rate = Number(cfg.tradeFeeRate ?? cfg.trade_fee_rate);
-      console.log(`platform: cpmm config index ${i} tradeFeeRate ${rate}`);
       if (rate === WANT) return pda;
       if (!fallback) fallback = pda;
     } catch { if (!fallback) fallback = pda; }
   }
-  if (fallback){ console.log("platform: WARNING — wanted tier", WANT, "not found, using fallback config"); return fallback; }
-  throw new Error("no live CPMM config found on " + CFG.NETWORK + " — set CP_CONFIG_ID env var");
+  if (fallback) { console.log("platform: WARNING — wanted tier not found, using fallback config"); return fallback; }
+  throw new Error("no live CPMM config found on " + CFG.NETWORK + " — set CP_CONFIG_ID");
 }
 
-async function ensurePlatform() {
-  if (ensured) return platformId();
-  const admin = adminKeypair();
-  if (!admin) {
-    console.log("platform: no PLATFORM_ADMIN_SECRET — launches use Raydium's default platform");
-    ensured = true;
-    return platformId();
-  }
+/** Top up `to` from the pad admin when it can't pay its own rent. */
+async function topUpFrom(fromKp, toPk, lamports) {
+  const bal = await connection.getBalance(fromKp.publicKey);
+  if (bal < lamports + 0.01 * LAMPORTS_PER_SOL) return false;
+  const tx = new Transaction().add(SystemProgram.transfer({
+    fromPubkey: fromKp.publicKey, toPubkey: toPk, lamports,
+  }));
+  await sendAndConfirmTransaction(connection, tx, [fromKp]);
+  console.log(`platform: topped up ${toPk.toBase58().slice(0, 6)}… with ${(lamports / LAMPORTS_PER_SOL).toFixed(3)} SOL`);
+  return true;
+}
+
+/** Create one platform if missing. Returns its id or null. */
+async function ensureOne({ label, admin, creatorFeeRate, claimWallet }) {
   const s = await loadSdk();
   const pid = CFG.IS_MAINNET ? s.LAUNCHPAD_PROGRAM : s.DEVNET_PROGRAM_ID.LAUNCHPAD_PROGRAM;
   const derived = s.getPdaPlatformId(pid, admin.publicKey).publicKey;
 
-  const acc = await connection.getAccountInfo(derived);
-  if (acc) {
-    cachedPlatformId = derived;
-    ensured = true;
-    console.log("platform: live —", derived.toBase58());
+  if (await connection.getAccountInfo(derived)) {
+    console.log(`platform[${label}]: live — ${derived.toBase58()}`);
     return derived;
   }
 
-  /* needs creating — check the admin can pay for it */
   let balance = await connection.getBalance(admin.publicKey);
-  if (balance < 0.05 * LAMPORTS_PER_SOL && process.env.OLD_ADMIN_SECRET) {
-    try {
-      const { SystemProgram, Transaction, sendAndConfirmTransaction } = require("@solana/web3.js");
-      const old = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.OLD_ADMIN_SECRET)));
-      const oldBal = await connection.getBalance(old.publicKey);
-      const move = oldBal - 0.01 * LAMPORTS_PER_SOL;
-      if (move > 0) {
-        const tx = new Transaction().add(SystemProgram.transfer({
-          fromPubkey: old.publicKey, toPubkey: admin.publicKey, lamports: Math.floor(move),
-        }));
-        await sendAndConfirmTransaction(connection, tx, [old]);
+  const NEED = 0.045 * LAMPORTS_PER_SOL;
+  if (balance < NEED) {
+    /* devnet: try the faucet; both networks: try a top-up from the pad admin */
+    if (!CFG.IS_MAINNET) {
+      try {
+        const sig = await connection.requestAirdrop(admin.publicKey, 1 * LAMPORTS_PER_SOL);
+        await connection.confirmTransaction(sig, "confirmed");
         balance = await connection.getBalance(admin.publicKey);
-        console.log("platform: swept", (move/LAMPORTS_PER_SOL).toFixed(3), "SOL from retired admin; balance", (balance/LAMPORTS_PER_SOL).toFixed(3));
-      }
-    } catch (e) { console.log("platform: sweep from old admin failed:", e.message); }
-  }
-  if (balance < 0.05 * LAMPORTS_PER_SOL && !CFG.IS_MAINNET) {
-    try {
-      const sig = await connection.requestAirdrop(admin.publicKey, 2 * LAMPORTS_PER_SOL);
-      await connection.confirmTransaction(sig, "confirmed");
-      balance = await connection.getBalance(admin.publicKey);
-      console.log("platform: devnet airdrop ok, balance", balance / LAMPORTS_PER_SOL, "SOL");
-    } catch {
-      console.log("platform: devnet airdrop failed (faucet limits)");
+      } catch { console.log(`platform[${label}]: devnet airdrop failed`); }
+    }
+    const pad = padAdmin();
+    if (balance < NEED && pad && !pad.publicKey.equals(admin.publicKey)) {
+      try {
+        if (await topUpFrom(pad, admin.publicKey, Math.ceil(NEED + 0.02 * LAMPORTS_PER_SOL))) {
+          balance = await connection.getBalance(admin.publicKey);
+        }
+      } catch (e) { console.log(`platform[${label}]: top-up failed:`, e.message); }
     }
   }
   if (balance < 0.03 * LAMPORTS_PER_SOL) {
-    console.log(
-      `platform: NOT created — fund the admin wallet ${admin.publicKey.toBase58()} ` +
-      `with ~0.05 SOL (${CFG.NETWORK}) and restart. Launches use Raydium's default platform until then.`
-    );
-    return platformId(); // not marking ensured: retried on next boot/launch
+    console.log(`platform[${label}]: NOT created — fund ${admin.publicKey.toBase58()} with ~0.05 SOL (${CFG.NETWORK}).`);
+    return null;
   }
 
   const { Raydium, TxVersion, getPdaAmmConfigId } = s;
@@ -143,89 +140,68 @@ async function ensurePlatform() {
     disableLoadToken: true,
     blockhashCommitment: "confirmed",
   });
-
-  const cpmmProgram = CFG.IS_MAINNET
-    ? s.CREATE_CPMM_POOL_PROGRAM
-    : s.DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM;
+  const cpmmProgram = CFG.IS_MAINNET ? s.CREATE_CPMM_POOL_PROGRAM : s.DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM;
   const cpConfigId = await resolveCpConfig(s, cpmmProgram);
-  console.log("platform: using cpConfigId", cpConfigId.toBase58());
+  console.log(`platform[${label}]: using cpConfigId ${cpConfigId.toBase58()}`);
 
-  /* PLATFORM_DEBUG=1: simulate variants, print anchor logs naming the failing check */
-  if (process.env.PLATFORM_DEBUG === "1") {
-    const { PublicKey } = require("@solana/web3.js");
-    const base = {
-      programId: pid,
-      platformAdmin: admin.publicKey,
-      platformClaimFeeWallet: admin.publicKey,
-      platformLockNftWallet: admin.publicKey,
-      platformVestingWallet: admin.publicKey,
-      cpConfigId,
-      migrateCpLockNftScale: { platformScale: new BN(250000), creatorScale: new BN(250000), burnScale: new BN(500000) },
-      transferFeeExtensionAuth: admin.publicKey,
-      creatorFeeRate: new BN(0),
-      feeRate: new BN(0),
-      name: "index", web: "https://launchonindex.fun", img: "https://launchonindex.fun",
-      txVersion: s.TxVersion.V0,
-    };
-    const variants = [
-      ["as-is", {}],
-      ["vestingWallet=default", { platformVestingWallet: PublicKey.default }],
-      ["feeRate=10000", { feeRate: new BN(10000) }],
-      ["vestDefault+fee10000", { platformVestingWallet: PublicKey.default, feeRate: new BN(10000) }],
-      ["docScales+fee10000", { migrateCpLockNftScale: { platformScale: new BN(100000), creatorScale: new BN(100000), burnScale: new BN(800000) }, feeRate: new BN(10000), platformVestingWallet: PublicKey.default }],
-    ];
-    for (const [label, over] of variants) {
-      try {
-        const { transactions } = await raydium.launchpad.createPlatformConfig({ ...base, ...over });
-        const tx = transactions ? transactions[0] : (await raydium.launchpad.createPlatformConfig({ ...base, ...over })).transactions?.[0];
-        const built = tx || null;
-        let vtx = built;
-        if (!vtx) {
-          const r2 = await raydium.launchpad.createPlatformConfig({ ...base, ...over });
-          vtx = r2.transaction || (r2.transactions && r2.transactions[0]);
-        }
-        vtx.sign([admin]);
-        const sim = await connection.simulateTransaction(vtx, { sigVerify: false, replaceRecentBlockhash: true });
-        const logs = (sim.value.logs || []).filter(l => /Error|error|left|right|Instruction:/.test(l)).slice(-6);
-        console.log(`probe[${label}]: err=${JSON.stringify(sim.value.err)} :: ${logs.join(" | ")}`);
-      } catch (e) {
-        console.log(`probe[${label}]: build failed: ${e.message || e}`);
-      }
-    }
-    console.log("probe done — set PLATFORM_DEBUG=0 and apply the passing variant");
-    return platformId();
-  }
-
-  const M = 1_000_000; // scale denominator = 100%
+  const wallet = claimWallet || admin.publicKey;
   const { execute } = await raydium.launchpad.createPlatformConfig({
     programId: pid,
     platformAdmin: admin.publicKey,
-    platformClaimFeeWallet: admin.publicKey,
-    platformLockNftWallet: admin.publicKey,
-    platformVestingWallet: admin.publicKey,
+    platformClaimFeeWallet: wallet,
+    platformLockNftWallet: wallet,
+    platformVestingWallet: wallet,
     cpConfigId,
-    /* program rule: creator_scale MUST be 0 at creation (require_eq in platform_config.rs);
-       creators earn via creatorFeeRate + creator-fee-on-AMM instead */
     migrateCpLockNftScale: {
-      platformScale: new BN(Number(process.env.PLATFORM_SCALE || 1_000_000)), // all LP fee rights -> platform (split off-chain: Index/treasury)
-      creatorScale:  new BN(Number(process.env.CREATOR_SCALE  || 0)),
-      burnScale:     new BN(Number(process.env.BURN_SCALE     || 0)),
+      platformScale: new BN(Number(process.env.PLATFORM_SCALE || 1_000_000)),
+      creatorScale: new BN(0), // program rule: must be 0 at creation
+      burnScale: new BN(Number(process.env.BURN_SCALE || 0)),
     },
-    transferFeeExtensionAuth: admin.publicKey,
-    creatorFeeRate: new BN(Number(process.env.CREATOR_FEE_RATE ?? 2_500)), // 0.25% of trades to the creator (post-grad, creatorFeeOn)
-    feeRate:        new BN(Number(process.env.PLATFORM_FEE_RATE || 0)),    // 0% platform fee on the curve — the pledge
-    name: process.env.PLATFORM_NAME || "index",
-    web:  process.env.PLATFORM_WEB  || "https://launchonindex.fun",
-    img:  process.env.PLATFORM_IMG  || "https://launchonindex.fun",
+    transferFeeExtensionAuth: wallet,
+    creatorFeeRate: new BN(creatorFeeRate),
+    feeRate: new BN(Number(process.env.PLATFORM_FEE_RATE || 0)), // 0% on the curve — the pledge
+    name: (process.env.PLATFORM_NAME || "index") + (label === "main" ? " main" : ""),
+    web: process.env.PLATFORM_WEB || "https://launchonindex.fun",
+    img: process.env.PLATFORM_IMG || "https://launchonindex.fun",
     txVersion: TxVersion.V0,
     computeBudgetConfig: { units: 400_000, microLamports: 50_000 },
   });
   const res = await execute({ sendAndConfirm: true });
   const txId = res?.txId || (Array.isArray(res?.txIds) ? res.txIds[0] : "");
-  cachedPlatformId = derived;
-  ensured = true;
-  console.log(`platform: CREATED ${derived.toBase58()} (tx ${txId}) — 0% curve fee · post-grad: pool tier + 0.25% creator, LP fee rights -> platform`);
+  console.log(`platform[${label}]: CREATED ${derived.toBase58()} (tx ${txId}) — creatorFeeRate=${creatorFeeRate}`);
   return derived;
 }
 
-module.exports = { ensurePlatform, platformId, adminPubkey: () => adminKeypair()?.publicKey?.toBase58() || null };
+async function ensurePlatform() {
+  const pad = padAdmin();
+  if (pad && !state.pad.ensured) {
+    const id = await ensureOne({
+      label: "pad",
+      admin: pad,
+      creatorFeeRate: Number(process.env.CREATOR_FEE_RATE ?? 2_500), // 0.25% to creators
+    });
+    if (id) { state.pad.id = id; state.pad.ensured = true; }
+  } else if (!pad) {
+    console.log("platform: no PLATFORM_ADMIN_SECRET — launches use Raydium's default platform");
+  }
+
+  const main = mainAdmin();
+  if (main && !state.main.ensured) {
+    const id = await ensureOne({
+      label: "main",
+      admin: main,
+      creatorFeeRate: 0, // $INDEX: nothing to a creator — the whole 1% flows to the platform side
+      claimWallet: pad ? pad.publicKey : null, // all revenue lands in the pad admin wallet
+    });
+    if (id) { state.main.id = id; state.main.ensured = true; }
+  }
+  return platformId();
+}
+
+module.exports = {
+  ensurePlatform,
+  platformId,
+  mainPlatformId,
+  adminPubkey: () => padAdmin()?.publicKey?.toBase58() || null,
+  mainAdminPubkey: () => mainAdmin()?.publicKey?.toBase58() || null,
+};

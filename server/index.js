@@ -28,6 +28,7 @@ app.get("/api/config", (_req, res) => {
     solPerPct: CFG.SOL_PER_PCT,
     platformId: pfid ? pfid.toBase58() : null,
     platformAdmin: platform.adminPubkey(),
+    mainPlatformId: platform.mainPlatformId() ? platform.mainPlatformId().toBase58() : null,
   });
 });
 

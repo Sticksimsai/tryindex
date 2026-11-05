@@ -33,6 +33,13 @@ function loadMint(mint) {
   if (mem.has(mint)) return mem.get(mint);
   let d = { trades: [], lastSig: null };
   try { d = JSON.parse(fs.readFileSync(fileFor(mint), "utf8")); } catch {}
+  /* purge entries recorded by older parse heuristics with implausible mcaps —
+     the backfill logic refetches them correctly */
+  const before = d.trades.length;
+  d.trades = d.trades.filter((t) => t.mcapSol >= 30 && t.mcapSol <= 3_000_000);
+  if (d.trades.length !== before) {
+    console.log(`indexer: ${mint.slice(0, 6)}… purged ${before - d.trades.length} bad trade(s)`);
+  }
   mem.set(mint, d);
   return d;
 }
@@ -60,20 +67,33 @@ function parseTrade(tx, mint, sig) {
                  - sumTok(tx.meta.preTokenBalances, mint, payer);
   if (Math.abs(tokDelta) < 1) return null; // metadata / transfer noise
 
-  /* net WSOL movement = SOL through the curve (vault + protocol fee vaults) */
-  const wsolDelta = sumTok(tx.meta.postTokenBalances, WSOL)
-                  - sumTok(tx.meta.preTokenBalances, WSOL);
-  let sol = Math.abs(wsolDelta);
-  if (sol < 1e-9) {
-    /* fallback: payer lamport delta minus the fee */
-    const i = 0;
-    const lam = (tx.meta.postBalances[i] - tx.meta.preBalances[i]) / 1e9;
-    sol = Math.max(0, Math.abs(lam) - tx.meta.fee / 1e9);
+  /* SOL size of the trade — three independent candidates, because routers
+     (Axiom etc.) move SOL differently (native vault, WSOL wrap, relayer fees):
+       a) net WSOL token movement across the tx
+       b) largest single-account lamport change other than the fee payer
+          (the curve vault, when it holds native SOL)
+       c) the fee payer's own lamport delta minus the tx fee
+     Pick the first one that implies a sane market cap. */
+  const wsolDelta = Math.abs(sumTok(tx.meta.postTokenBalances, WSOL)
+                           - sumTok(tx.meta.preTokenBalances, WSOL));
+  let biggest = 0;
+  for (let i = 1; i < tx.meta.postBalances.length; i++) {
+    biggest = Math.max(biggest, Math.abs(tx.meta.postBalances[i] - tx.meta.preBalances[i]) / 1e9);
   }
-  if (sol < 1e-6) return null;
+  const payerLam = Math.max(0,
+    Math.abs(tx.meta.postBalances[0] - tx.meta.preBalances[0]) / 1e9 - tx.meta.fee / 1e9);
+
+  const tokens = Math.abs(tokDelta);
+  const MIN_MCAP = 30, MAX_MCAP = 3_000_000; // SOL: ~$4.5k .. $450m — anything else is noise
+  let sol = 0;
+  for (const cand of [wsolDelta, biggest, payerLam]) {
+    if (cand < 1e-6) continue;
+    const mcap = (cand / tokens) * SUPPLY;
+    if (mcap >= MIN_MCAP && mcap <= MAX_MCAP) { sol = cand; break; }
+  }
+  if (!sol) return null;
 
   const side = tokDelta > 0 ? "buy" : "sell";
-  const tokens = Math.abs(tokDelta);
   const priceSol = sol / tokens;
   return {
     t: (tx.blockTime || Math.floor(Date.now() / 1000)) * 1000,

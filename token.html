@@ -514,7 +514,8 @@ function renderTrades(){
 function setTxt(id, v){ const el = document.getElementById(id); if(el && v != null) el.textContent = v; }
 function renderStats(){
   if(!stats) return;
-  const mc = stats.mcapUsd || (stats.mcapSol && solPx ? stats.mcapSol * solPx : null);
+  let mc = stats.mcapUsd || (stats.mcapSol && solPx ? stats.mcapSol * solPx : null);
+  if(mc && mc < 1000) mc = null; // stale/implausible stats — keep the entry default
   if(mc){
     setTxt("t-mc", fmtUsd(mc)); setTxt("t-price", fmtUsd(mc));
     const chg = document.getElementById("t-chg");

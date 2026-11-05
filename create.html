@@ -471,7 +471,8 @@ function say(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
-document.getElementById("connect").addEventListener("click", ()=>say("Connect your wallet on the launch page — one click from “+ Launch”."));
+const _cb = document.getElementById("connect");
+if (_cb) _cb.addEventListener("click", ()=>say("Connecting…"));
 
 
 /* ================= live launch engine wiring ================= */

@@ -252,7 +252,7 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
         <div class="nav-right">
           <a class="icon-btn" href="https://x.com/launchonindex" rel="noopener" aria-label="index on X"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M4 3h4.6l4.1 5.7L17.6 3H21l-6.6 8 7 10h-4.6l-4.5-6.3L7 21H3.5l7-8.4L4 3z"/></svg></a>
           <a class="cta-halo sm" href="create"><span class="btn-inner">+ Launch</span></a>
-          <button class="cta-halo sm" id="connect"><span class="btn-inner">Connect wallet</span></button>
+
         </div>
       </nav>
       <div class="term">
@@ -433,7 +433,8 @@ function say(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
-document.getElementById("connect").addEventListener("click", ()=>say("Connect your wallet on the launch page — one click from “+ Launch”."));
+const _cb = document.getElementById("connect");
+if (_cb) _cb.addEventListener("click", ()=>say("Connecting…"));
 
 
 </script>

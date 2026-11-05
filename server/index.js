@@ -9,6 +9,7 @@ const store = require("./store");
 const { prepareLaunch, submitLaunch, curveParams, solUsd } = require("./launch");
 const platform = require("./platform");
 const indexer = require("./indexer");
+const creatorFees = require("./creatorfees");
 
 const app = express();
 app.use(cors());
@@ -120,6 +121,45 @@ app.post("/api/launch/submit", async (req, res) => {
 });
 
 app.get("/api/launches", (_req, res) => res.json(store.list()));
+
+/* -------- creator fees: accrued balance + claim (creator signs) -------- */
+app.get("/api/creator-fees/:mint", async (req, res) => {
+  try {
+    const t = store.get(req.params.mint);
+    if (!t) return res.status(404).json({ error: "not found" });
+    const out = await creatorFees.feesFor(t.creator);
+    /* estimate of this token's contribution: creatorFeeRate x its curve volume */
+    const rate = Number(process.env.CREATOR_FEE_RATE ?? 2500) / 1e6;
+    out.thisTokenVolSol = t.vol24Sol || 0;
+    out.estFromThisTokenSol = Math.round((t.vol24Sol || 0) * rate * 1e6) / 1e6;
+    out.feeRatePct = rate * 100;
+    res.json({ ok: true, ...out });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+app.post("/api/creator-fees/claim/prepare", async (req, res) => {
+  try {
+    const { creator } = req.body || {};
+    if (!creator) return res.status(400).json({ error: "creator required" });
+    const bal = await creatorFees.feesFor(creator);
+    if (!bal.claimableSol) return res.status(400).json({ error: "nothing to claim yet" });
+    const out = await creatorFees.prepareClaim(creator);
+    res.json({ ok: true, claimableSol: bal.claimableSol, ...out });
+  } catch (e) {
+    console.error("claim prepare failed:", e.message);
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+app.post("/api/creator-fees/claim/submit", async (req, res) => {
+  try {
+    const { signatures } = await creatorFees.submitClaim((req.body || {}).txs);
+    res.json({ ok: true, signatures });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
 app.get("/api/trades/:mint", async (req, res) => {
   const t = store.get(req.params.mint);
   if (!t) return res.status(404).json({ error: "not found" });

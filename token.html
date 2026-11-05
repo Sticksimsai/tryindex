@@ -241,6 +241,7 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (max-width:860px){nav .links{display:none}}
 </style>
+<script src="https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
 </head>
 <body>
 <div class="stage">
@@ -309,7 +310,7 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
             <div>
               <div class="irow"><span class="k">War chest balance</span><span class="v num">0 SOL</span></div>
               <div class="irow"><span class="k">Buybacks 7d</span><span class="v num">0 SOL</span></div>
-              <div class="irow"><span class="k">Creator fees earned</span><span class="v g num">0 SOL</span></div>
+              <div class="irow"><span class="k">Creator fees earned</span><span class="v g num" id="t-cfees">— SOL</span></div>
               <div class="irow"><span class="k">Launched</span><span class="v num" id="t-age">—</span></div>
             </div>
             <button class="claimb" id="claim">Claim creator fees</button>
@@ -562,7 +563,46 @@ document.querySelectorAll(".tfb").forEach(b=>b.addEventListener("click",()=>{
   draw();
 }));
 
-document.getElementById("claim").addEventListener("click", ()=>say("Creator fees accrue after graduation — nothing to claim yet."));
+/* ---------------- creator fees: live balance + sweep ---------------- */
+let feeInfo = null;
+async function refreshFees(){
+  try{
+    const r = await fetch("/api/creator-fees/" + mintParam);
+    if(!r.ok) return;
+    feeInfo = await r.json();
+    const el = document.getElementById("t-cfees");
+    if(el) el.textContent = (feeInfo.claimableSol || 0).toFixed(4) + " SOL";
+  }catch{}
+}
+refreshFees(); setInterval(refreshFees, 30000);
+
+const walletProvider = () => window.phantom?.solana || window.solflare || window.backpack?.solana || window.solana;
+document.getElementById("claim").addEventListener("click", async ()=>{
+  const p = walletProvider();
+  if(!p) return say("No Solana wallet found — install Phantom to claim.");
+  try{
+    await p.connect();
+    const pub = p.publicKey.toString();
+    say("Checking your creator vault…");
+    const r = await fetch("/api/creator-fees/claim/prepare", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ creator: pub }),
+    });
+    const j = await r.json();
+    if(!r.ok || !j.ok) return say(j.error || "Nothing to claim yet.");
+    const txs = j.txs.map(b64 => solanaWeb3.VersionedTransaction.deserialize(Uint8Array.from(atob(b64), c=>c.charCodeAt(0))));
+    const signed = p.signAllTransactions ? await p.signAllTransactions(txs) : [await p.signTransaction(txs[0])];
+    say("Sweeping fees…");
+    const r2 = await fetch("/api/creator-fees/claim/submit", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ txs: signed.map(tx => btoa(String.fromCharCode.apply(null, tx.serialize()))) }),
+    });
+    const j2 = await r2.json();
+    if(!r2.ok || !j2.ok) return say(j2.error || "Claim failed — try again.");
+    say("Swept " + j.claimableSol.toFixed(4) + " SOL to your wallet");
+    refreshFees();
+  }catch(e){ say(e.message || "Claim cancelled"); }
+});
 
 const toast = document.getElementById("toast");
 let toastTimer;

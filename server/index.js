@@ -123,16 +123,20 @@ app.post("/api/launch/submit", async (req, res) => {
 app.get("/api/launches", (_req, res) => res.json(store.list()));
 
 /* -------- creator fees: accrued balance + claim (creator signs) -------- */
-app.get("/api/creator-fees/:mint", async (req, res) => {
+app.get("/api/creator-fees/:id", async (req, res) => {
   try {
-    const t = store.get(req.params.mint);
-    if (!t) return res.status(404).json({ error: "not found" });
-    const out = await creatorFees.feesFor(t.creator);
-    /* estimate of this token's contribution: creatorFeeRate x its curve volume */
+    /* :id can be a token mint launched here, OR a creator wallet directly —
+       fee vaults are per-creator either way */
+    const t = store.get(req.params.id);
+    const creator = t ? t.creator : req.params.id;
+    const out = await creatorFees.feesFor(creator);
     const rate = Number(process.env.CREATOR_FEE_RATE ?? 2500) / 1e6;
-    out.thisTokenVolSol = t.vol24Sol || 0;
-    out.estFromThisTokenSol = Math.round((t.vol24Sol || 0) * rate * 1e6) / 1e6;
     out.feeRatePct = rate * 100;
+    out.resolvedFrom = t ? "mint" : "wallet";
+    if (t) {
+      out.thisTokenVolSol = t.vol24Sol || 0;
+      out.estFromThisTokenSol = Math.round((t.vol24Sol || 0) * rate * 1e6) / 1e6;
+    }
     res.json({ ok: true, ...out });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e) });

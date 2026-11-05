@@ -11,7 +11,7 @@ const platform = require("./platform");
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "3mb" }));
+app.use(express.json({ limit: "8mb" }));
 
 const META_DIR = path.join(__dirname, "data", "meta");
 fs.mkdirSync(META_DIR, { recursive: true });
@@ -52,12 +52,13 @@ app.post("/api/launch/prepare", async (req, res) => {
     const id = crypto.randomBytes(8).toString("hex");
     let imageUri = "";
     if (imageBase64) {
-      const m = /^data:image\/(png|jpe?g|webp);base64,(.+)$/.exec(imageBase64);
-      if (!m) return res.status(400).json({ error: "bad image" });
+      const m = /^data:image\/(png|jpe?g|webp|gif);base64,(.+)$/.exec(imageBase64);
+      if (!m) return res.status(400).json({ error: "bad image — PNG, JPG, WEBP or GIF" });
       const buf = Buffer.from(m[2], "base64");
-      if (buf.length > 2_000_000) return res.status(400).json({ error: "image too large (2MB max)" });
-      fs.writeFileSync(path.join(META_DIR, `${id}.img`), buf);
-      imageUri = `${CFG.PUBLIC_URL}/meta/${id}.img`;
+      if (buf.length > 5_000_000) return res.status(400).json({ error: "image too large (5MB max)" });
+      const ext = m[1] === "jpeg" ? "jpg" : m[1];
+      fs.writeFileSync(path.join(META_DIR, `${id}.${ext}`), buf);
+      imageUri = `${CFG.PUBLIC_URL}/meta/${id}.${ext}`;
     }
     const meta = {
       name: String(name).slice(0, CFG.MAX_NAME),

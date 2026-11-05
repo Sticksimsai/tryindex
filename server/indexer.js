@@ -142,7 +142,7 @@ async function pollMint(l) {
   for (const s of fresh) {
     try {
       const tx = await connection.getTransaction(s.signature, {
-        maxSupportedTransactionVersion: 0,
+        maxSupportedTransactionVersion: 127, // v0, v1 and whatever comes next
         commitment: "confirmed",
       });
       const tr = parseTrade(tx, l.mint, s);

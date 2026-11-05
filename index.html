@@ -374,14 +374,9 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,2.
   @keyframes capFill{0%,6%{width:0}42%{width:76%}52%{width:72.5%}62%{width:76%}70%{width:74.5%}78%,92%{width:76%}100%{width:0}}
 }
 @media (prefers-reduced-motion:reduce){.r2m .fill{width:76%}}
-/* 03: price stairs climb from the floor */
-.r3m svg{width:100%;height:38px;display:block}
-.r3m .stair{fill:none;stroke:var(--ac);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.r3m .lvl{stroke:rgba(255,255,255,.14);stroke-dasharray:3 5}
-@media (prefers-reduced-motion:no-preference){
-  .r3m .stair{stroke-dasharray:190;stroke-dashoffset:190;animation:stairUp 4.4s cubic-bezier(.2,.7,.2,1) infinite}
-  @keyframes stairUp{0%,8%{stroke-dashoffset:190}58%,90%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:.3}}
-}
+/* 03: mini candle chart climbs from the $20k floor */
+.r3m{display:block}
+.r3m canvas{width:100%;height:46px;display:block}
 /* 04: fee state flips once the bar crosses */
 .r4m{display:flex;align-items:center;gap:9px;font-size:.76rem;font-weight:600;flex-wrap:wrap}
 .r4m .z0{color:#6ee7a0}
@@ -635,11 +630,7 @@ input[type=text], input[type=url], input[type=search], textarea{cursor:text}
             <span class="big">$20k</span>
             <h3>Entry floor</h3>
             <p>Every token opens at a $20k market cap. No sub-$5k sniper ramp, no 25× head start for bots — the first buyer and the hundredth get comparable entries.</p>
-            <div class="rmini r3m"><svg viewBox="0 0 150 38" preserveAspectRatio="none" aria-hidden="true">
-              <line class="lvl" x1="2" y1="33" x2="148" y2="33"/>
-              <line class="lvl" x1="2" y1="5" x2="148" y2="5"/>
-              <path class="stair" d="M4 33 H34 V26 H64 V19 H94 V12 H124 V5 H146"/>
-            </svg></div>
+            <div class="rmini r3m"><canvas id="r3chart" aria-hidden="true"></canvas></div>
           </div>
           <div class="rule r4" style="--ac:#f5cf8f">
             <span class="rico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
@@ -927,6 +918,83 @@ drawRing(0);
 function nextMonday(){const n=new Date();const d=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()));const add=((8-d.getUTCDay())%7)||7;d.setUTCDate(d.getUTCDate()+add);return d;}
 function tickRot(){let ms=nextMonday()-Date.now();const d=Math.floor(ms/86400000);ms-=d*86400000;const h=Math.floor(ms/3600000);ms-=h*3600000;const m=Math.floor(ms/60000);$id("rot-in").textContent=`${d}d ${h}h ${m}m`;}
 tickRot(); setInterval(tickRot, 30000);
+
+/* ================= rules card 03: mini candle chart ================= */
+(function(){
+  const cnv = document.getElementById("r3chart");
+  if(!cnv) return;
+  const c = cnv.getContext("2d");
+  let W=0, H=46, DPR=Math.min(devicePixelRatio||1,2);
+  function size(){
+    const r = cnv.parentElement.getBoundingClientRect();
+    W = Math.max(120, r.width);
+    cnv.width = W*DPR; cnv.height = H*DPR;
+    cnv.style.height = H+"px";
+    c.setTransform(DPR,0,0,DPR,0,0);
+  }
+  size(); addEventListener("resize", size);
+
+  /* deterministic climb: 20k floor -> 100k, with pullbacks */
+  const closes = [22,25,24,29,34,32,38,45,42,50,58,54,65,74,70,82,92,100];
+  const N = closes.length;
+  const candles = closes.map((cl,i)=>{
+    const op = i ? closes[i-1] : 20;
+    const hi = Math.max(op,cl) + 2.5;
+    const lo = Math.min(op,cl) - 2.5;
+    return {op,cl,hi,lo,up: cl>=op};
+  });
+  const LO=16, HI=104;
+  const y = v => 4 + (HI-v)/(HI-LO)*(H-10);
+
+  function draw(progress, pulse){
+    c.clearRect(0,0,W,H);
+    /* floor + target dashed lines */
+    c.strokeStyle = "rgba(255,255,255,.13)";
+    c.lineWidth = 1;
+    c.setLineDash([3,5]);
+    for(const v of [20,100]){
+      c.beginPath(); c.moveTo(0,y(v)); c.lineTo(W,y(v)); c.stroke();
+    }
+    c.setLineDash([]);
+    const show = Math.min(N, Math.floor(progress*N)+1);
+    const cw = W/N;
+    for(let i=0;i<show;i++){
+      const k = candles[i];
+      const x = i*cw + cw/2;
+      /* grow-in for the newest candle */
+      const t = i===show-1 ? Math.min(1,(progress*N)-(show-1)) : 1;
+      const col = k.up ? "#6ee7a0" : "#f87171";
+      c.strokeStyle = col; c.fillStyle = col;
+      c.globalAlpha = i===show-1 ? .4+.6*t : 1;
+      /* wick */
+      c.lineWidth = 1;
+      c.beginPath(); c.moveTo(x, y(k.hi)); c.lineTo(x, y(k.lo)); c.stroke();
+      /* body */
+      const by1 = y(Math.max(k.op,k.cl)), by2 = y(Math.min(k.op,k.cl));
+      const bh = Math.max(1.5,(by2-by1))*t;
+      c.fillRect(x-cw*0.28, by1 + (by2-by1-bh)/2*(1-t), cw*0.56, bh);
+      c.globalAlpha = 1;
+    }
+    /* graduation pulse on the last candle */
+    if(progress >= 1 && pulse > 0){
+      const x = (N-1)*cw + cw/2;
+      c.beginPath();
+      c.strokeStyle = "rgba(110,231,160,"+(pulse*.8)+")";
+      c.lineWidth = 1.5;
+      c.arc(x, y(100), 4 + (1-pulse)*9, 0, Math.PI*2);
+      c.stroke();
+    }
+  }
+
+  if(reduceMotion){ draw(1,0); return; }
+  const CYCLE = 5000, DRAW = .62;
+  (function loop(now){
+    const t = (now % CYCLE)/CYCLE;
+    if(t < DRAW) draw(t/DRAW, 0);
+    else draw(1, 1-((t-DRAW)/(1-DRAW)*2.2)%1);
+    requestAnimationFrame(loop);
+  })(0);
+})();
 
 /* ================= rules card 01: sealed CA scramble ================= */
 (function(){
